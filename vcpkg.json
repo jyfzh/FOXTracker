@@ -1,0 +1,24 @@
+{
+  "name": "foxtracker",
+  "version-string": "1.0.0",
+  "description": "FOXTracker - Face tracking application for flight simulators",
+  "homepage": "https://github.com/jyf/FOXTracker",
+  "dependencies": [
+    {
+      "name": "qt5",
+      "features": ["essentials", "charts"]
+    },
+    {
+      "name": "opencv4",
+      "features": ["calib3d", "contrib", "dnn", "eigen", "highgui"]
+    },
+    "eigen3",
+    "ceres",
+    "glog",
+    "yaml-cpp",
+    "dlib",
+    "onnxruntime",
+    "libusb",
+    "sdl2"
+  ]
+}

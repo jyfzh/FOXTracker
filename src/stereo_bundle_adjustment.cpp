@@ -102,12 +102,12 @@ std::pair<Pose, Matrix6d> StereoBundleAdjustment::solve(const Pose & initial, bo
         problem.AddResidualBlock(cf, nullptr, cam_pose_2_inv);
     }
 
-    ceres::LocalParameterization* pose_local_parameterization = new ceres::ProductParameterization (new ceres::IdentityParameterization(3), 
-        new ceres::EigenQuaternionParameterization());
+    ceres::Manifold* pose_local_parameterization = new ceres::ProductManifold<ceres::EuclideanManifold<3>, ceres::QuaternionManifold>(
+        ceres::EuclideanManifold<3>(), ceres::QuaternionManifold());
 
-    problem.SetParameterization(pose_drone, pose_local_parameterization);
+    problem.SetManifold(pose_drone, pose_local_parameterization);
     if (est_extrinsic) {
-        problem.SetParameterization(cam_pose_2_inv, pose_local_parameterization);
+        problem.SetManifold(cam_pose_2_inv, pose_local_parameterization);
     }
     ceres::Solver::Options options;
     options.max_num_iterations = 100;
@@ -141,39 +141,4 @@ std::pair<Pose, Matrix6d> StereoBundleAdjustment::solve(const Pose & initial, bo
     Eigen::Matrix<double, 6, 6> cov6d = cov_pose_drone.block<6, 6>(0, 0);
 
     return std::make_pair(est_drone_pose, cov6d);
-}
-
-namespace ceres {
-bool EigenQuaternionParameterization::Plus(const double* x_ptr,
-                                           const double* delta,
-                                           double* x_plus_delta_ptr) const {
-  Eigen::Map<Eigen::Quaterniond> x_plus_delta(x_plus_delta_ptr);
-  Eigen::Map<const Eigen::Quaterniond> x(x_ptr);
-
-  const double norm_delta =
-      sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
-  if (norm_delta > 0.0) {
-    const double sin_delta_by_delta = sin(norm_delta) / norm_delta;
-
-    // Note, in the constructor w is first.
-    Eigen::Quaterniond delta_q(cos(norm_delta),
-                               sin_delta_by_delta * delta[0],
-                               sin_delta_by_delta * delta[1],
-                               sin_delta_by_delta * delta[2]);
-    x_plus_delta = delta_q * x;
-  } else {
-    x_plus_delta = x;
-  }
-
-  return true;
-}
-
-bool EigenQuaternionParameterization::ComputeJacobian(const double* x,
-                                                      double* jacobian) const {
-  jacobian[0] =  x[3]; jacobian[1]  =  x[2]; jacobian[2]  = -x[1];  // NOLINT
-  jacobian[3] = -x[2]; jacobian[4]  =  x[3]; jacobian[5]  =  x[0];  // NOLINT
-  jacobian[6] =  x[1]; jacobian[7]  = -x[0]; jacobian[8]  =  x[3];  // NOLINT
-  jacobian[9] = -x[0]; jacobian[10] = -x[1]; jacobian[11] = -x[2];  // NOLINT
-  return true;
-}
 }

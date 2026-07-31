@@ -9,7 +9,12 @@ FSANet::FSANet():env(ORT_LOGGING_LEVEL_WARNING, "test") {
 
     printf("Using Onnxruntime C++ API\n");
     std::wstring unicode(settings->fsanet_model.begin(), settings->fsanet_model.end());
-    session = new Ort::Session(env, unicode.c_str(), session_options);
+    try {
+        session = new Ort::Session(env, unicode.c_str(), session_options);
+    } catch (const Ort::Exception & e) {
+        fprintf(stderr, "ORT session creation failed: %s (code %d)\n", e.what(), (int)e.GetOrtErrorCode());
+        throw;
+    }
 
 
     Ort::AllocatorWithDefaultOptions allocator;

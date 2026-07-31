@@ -54,7 +54,9 @@ protected:
 
     Vector7d h0() {
         //h for pose measurement
-        return X.block<7, 1>(0, 0);
+        // `template` is required: X's type is dependent on the class template
+        // parameter, so clang (unlike MSVC) won't parse block<...> without it
+        return X.template block<7, 1>(0, 0);
     }
 
     virtual Matrix<double, D, 1> f(double dt) = 0;

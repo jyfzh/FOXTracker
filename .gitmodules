@@ -1,3 +1,9 @@
 [submodule "lib/PS3EYEDriver"]
 	path = lib/PS3EYEDriver
-	url = https://github.com/inspirit/PS3EYEDriver
+	url = https://gh-proxy.com/https://github.com/inspirit/PS3EYEDriver
+[submodule "lib/QJoysticks"]
+	path = lib/QJoysticks
+	url = https://gh-proxy.com/https://github.com/alex-spataru/QJoysticks.git
+[submodule "lib/UGlobalHotkey"]
+	path = lib/UGlobalHotkey
+	url = https://gh-proxy.com/https://github.com/petrows/UGlobalHotkey.git

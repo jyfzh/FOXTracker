@@ -1,6 +1,15 @@
 #ifndef UTILS_H
 #define UTILS_H
+
+// MSVC only exposes M_PI etc. when _USE_MATH_DEFINES is defined before <cmath>;
+// also fall back to a local definition for portability.
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <Eigen/Eigen>
 #include <opencv2/opencv.hpp>
 

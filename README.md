@@ -9,6 +9,18 @@ A normal web camera.
 
 Windows 10 x64 is only offically support operating system.
 
+## Build
+The project uses CMake presets and vcpkg manifest mode. Set `VCPKG_ROOT` to your vcpkg checkout, then run:
+
+```powershell
+cmake --preset windows-x64
+cmake --build --preset windows-x64-release
+```
+
+Use `--preset windows-x64-debug` for a debug build, or pass `--target clean` before building to recreate the build directory. The PS3 Eye submodule is optional; initialize it with `git submodule update --init` to enable camera support.
+
+CMake is the only supported build entry point. The generated executable and runtime files are placed under the CMake build directory.
+
 ## Usage
 This program is still under development, not stable yet. **I will never collect any user data from your camera.**
 

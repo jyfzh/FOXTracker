@@ -24,7 +24,6 @@ tags
 .directory
 *.debug
 Makefile*
-*.prl
 *.app
 moc_*.cpp
 ui_*.h
@@ -32,11 +31,8 @@ qrc_*.cpp
 Thumbs.db
 *.res
 *.rc
-/.qmake.cache
-/.qmake.stash
 
-# qtcreator generated files
-*.pro.user*
+# Qt and IDE generated files
 
 # xemacs temporary files
 *.flc
@@ -71,12 +67,9 @@ Thumbs.db
 *.dll
 *.exe
 
-build-uglobalhotkey-Desktop_Qt_5_14_1_MSVC2017_32bit-Release/
 Release/assets/
-build-uglobalhotkey-Desktop_Qt_5_14_1_MSVC2017_32bit-Debug/debug/moc_predefs.h
 Release/
 Release.7z
-build-uglobalhotkey-Desktop_Qt_5_14_1_MSVC2017_32bit-Debug/
 
 *.zip
 Release
@@ -88,4 +81,12 @@ Release.x86.bk/
 docs/FAgX30FPS.PNG
 docs/FAgX60FPS.PNG
 docs/FAgX75FPS.PNG
+
+# CMake, vcpkg, IDE, and local tooling output
+/.codegraph/
+/build/
+/cmake-build-*/
+/vcpkg_installed/
+/.vs/
+CMakeUserPresets.json
 .qt_for_python/

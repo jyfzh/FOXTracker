@@ -13,9 +13,9 @@ using namespace std;
 
 #define USE_BA
 
-cv::Ptr<cv::Tracker> create_tracker() {
-    return cv::TrackerMedianFlow::create();
-    //return cv::TrackerMOSSE::create();
+cv::Ptr<cv::legacy::Tracker> create_tracker() {
+    return cv::legacy::TrackerMedianFlow::create();
+    //return cv::legacy::TrackerMOSSE::create();
 }
 
 

@@ -17,7 +17,8 @@
 #include <KalmanFilter.h>
 #include <inc/FSANet.h>
 #include "inc/FaceDetectors.h"
-#include <opencv2/tracking/tracker.hpp>
+#include <opencv2/tracking.hpp>
+#include <opencv2/tracking/tracking_legacy.hpp>
 #include <PS3EYEDriver/src/ps3eye.h>
 #include <PS3EYEDriver/src/ps3eye_capi.h>
 
@@ -105,7 +106,7 @@ class HeadPoseDetector: public QObject {
     cv::Rect2d last_roi;
     int frame_count = 0;
 
-    cv::Ptr<cv::Tracker> tracker;
+    cv::Ptr<cv::legacy::Tracker> tracker;
 
     cv::Mat preview_image;
 
