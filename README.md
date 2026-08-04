@@ -27,7 +27,7 @@ This program is still under development, not stable yet. **I will never collect 
 Download FOXTracker at [Release](https://github.com/xuhao1/FOXTracker/releases)
 
 
-This program supports control games directly or uses Opentrack as backend. For now, the spline function is in development, so use Opentrack is a good idea. If you are using this program individually, please modify config or the config.yaml.
+This program supports control games directly or uses Opentrack as backend. For now, the spline function is in development, so use Opentrack is a good idea. If you are using this program individually, please modify the config in the UI or assets/config.yaml.
 
 ![c1](./docs/config.PNG)
 

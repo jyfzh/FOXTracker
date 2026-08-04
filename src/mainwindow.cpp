@@ -80,7 +80,7 @@ void MainWindow::on_exit() {
 
 void MainWindow::create_tray_icon() {
     if (m_tray_icon == nullptr) {
-        m_tray_icon = new QSystemTrayIcon(QIcon(":/icon.png"), this);
+        m_tray_icon = new QSystemTrayIcon(QIcon(":/icons/icon.png"), this);
 
         connect( m_tray_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(on_show_hide(QSystemTrayIcon::ActivationReason)) );
 

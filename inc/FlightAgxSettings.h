@@ -131,7 +131,7 @@ public:
         }
     }
 
-    std::string cfg_name = "/config.yaml";
+    std::string cfg_name = "/assets/config.yaml";
     std::string trackir_path = "/assets/TrackIR.exe";
     std::string support_games_csv = "/assets/facetracknoir supported games.csv";
     std::string model_66 = "/assets/landmark_models/model_66.txt";
@@ -185,7 +185,7 @@ public:
         model_68 = app_path + model_68;
         landmark_model = app_path + landmark_model;
         fsanet_model = app_path + fsanet_model;
-        cfg_name = app_path + "/config.yaml";
+        cfg_name = app_path + "/assets/config.yaml";
         protoPath = app_path + protoPath;
         modelPath = app_path + modelPath;
 

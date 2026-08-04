@@ -17,11 +17,11 @@ FOXTracker-0.0.8以及以前支持32位windows 10系统，FOXTracker-0.1.0以后
 
 你可以使用本程序直接控制游戏，或者使用opentrack作为后端。考虑到目前曲线功能还没有开发完成，推荐使用opentrack。
 
-目前所有主要配置功能都在主页面下的Config页面中，一部分很少需要改动的可以在config.yaml中修改，请设置程序满足你的需求。
+目前所有主要配置功能都在主页面下的Config页面中，一部分很少需要改动的可以在程序目录下的assets/config.yaml中修改，请设置程序满足你的需求。
 ![c1](./config.PNG)
 
 注意，landmark model第一档和第二档都是比较合适使用的。取决于摄像头FPS以及电脑性能。
-设置好config.yaml后，一般推荐结合opentrack使用（即关闭use_ft 和use_npclient）。
+设置好assets/config.yaml后，一般推荐结合opentrack使用（即关闭use_ft 和use_npclient）。
 
 把你的opentrack的input设置为UDP，点击Start，打开FOXTracker.exe，然后即可运行对应的游戏。**务必**在Opentrack设置曲线（用于映射用户头部移动和视角移动的相对关系）和滤波（用于抑制抖动）以获得最好的游戏体验。
 如果画面有抖动请拉大Filter的smooth。背光请在config中关闭Auto Expo,并且手动调整亮度。

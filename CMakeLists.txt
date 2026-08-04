@@ -52,16 +52,16 @@ set(FOXTRACKER_SOURCES
 )
 
 set(FOXTRACKER_FORMS
-    "${PROJECT_SOURCE_DIR}/agentxconfig.ui"
-    "${PROJECT_SOURCE_DIR}/ekfconfig.ui"
-    "${PROJECT_SOURCE_DIR}/filterconfig.ui"
-    "${PROJECT_SOURCE_DIR}/mainwindow.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/agentxconfig.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/ekfconfig.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/filterconfig.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/mainwindow.ui"
 )
 
 add_executable(FOXTracker WIN32
     ${FOXTRACKER_SOURCES}
     ${FOXTRACKER_FORMS}
-    "${PROJECT_SOURCE_DIR}/main.qrc"
+    "${PROJECT_SOURCE_DIR}/assets/main.qrc"
     "${PROJECT_SOURCE_DIR}/inc/agentxconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/ekfconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/filterconfig.h"
@@ -71,7 +71,7 @@ add_executable(FOXTracker WIN32
 )
 
 set_target_properties(FOXTracker PROPERTIES
-    AUTOUIC_SEARCH_PATHS "${PROJECT_SOURCE_DIR}"
+    AUTOUIC_SEARCH_PATHS "${PROJECT_SOURCE_DIR};${PROJECT_SOURCE_DIR}/assets/ui"
 )
 
 target_include_directories(FOXTracker PRIVATE
@@ -107,14 +107,12 @@ install(TARGETS FOXTracker
 )
 
 # Keep runtime files beside the executable for the existing application path
-# lookup in FlightAgxSettings.
+# lookup in FlightAgxSettings. config.yaml lives inside assets/, so the
+# whole directory copy covers it.
 add_custom_command(TARGET FOXTracker POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory
         "${PROJECT_SOURCE_DIR}/assets"
         "$<TARGET_FILE_DIR:FOXTracker>/assets"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "${PROJECT_SOURCE_DIR}/config.yaml"
-        "$<TARGET_FILE_DIR:FOXTracker>/config.yaml"
     COMMENT "Copying runtime assets"
     VERBATIM
 )

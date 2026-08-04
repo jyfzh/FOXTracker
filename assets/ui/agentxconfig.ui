@@ -864,7 +864,7 @@ color: #8fbed4;</string>
       <string/>
      </property>
      <property name="pixmap">
-      <pixmap resource="main.qrc">:/assets/dcs.JPG</pixmap>
+      <pixmap resource="../main.qrc">:/dcs.JPG</pixmap>
      </property>
      <property name="scaledContents">
       <bool>true</bool>
@@ -921,7 +921,7 @@ color: #8fbed4;</string>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="main.qrc"/>
+  <include location="../main.qrc"/>
  </resources>
  <connections>
   <connection>
