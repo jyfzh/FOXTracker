@@ -45,7 +45,6 @@ set(FOXTRACKER_SOURCES
     src/KalmanFilter.cpp
     src/main.cpp
     src/mainwindow.cpp
-    src/math_tests.cpp
     src/PoseDataSender.cpp
     src/poseremapper.cpp
     src/stereo_bundle_adjustment.cpp

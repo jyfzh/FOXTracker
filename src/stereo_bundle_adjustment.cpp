@@ -119,11 +119,9 @@ std::pair<Pose, Matrix6d> StereoBundleAdjustment::solve(const Pose & initial, bo
 
     est_drone_pose = Pose(pose_drone);
     // std::cout << summary.FullReport() << std::endl;
-    std::cout << "Initial" << initial.tostr() << "Ret" << est_drone_pose.tostr() << std::endl;
 
     if (est_extrinsic) {
         cam_pose_2_est = Pose(cam_pose_2_inv).inverse();
-        std::cout << "cam_pose_2_initial" << camera_pose_2.tostr() << "Ret" << cam_pose_2_est.tostr() << std::endl;
     } else {
         cam_pose_2_est = camera_pose_2;
     }

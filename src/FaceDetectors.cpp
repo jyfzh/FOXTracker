@@ -260,10 +260,6 @@ cv::Rect2d FaceDetector::detect(const cv::Mat & frame, cv::Rect2d predict_roi) {
 //                roi = cv::Rect2d(0, 0, 640, 480);
             }
 
-            if (last_roi.area() < MIN_ROI_AREA) {
-                last_roi = roi;
-            }
-
             if (roi.area()>MIN_ROI_AREA) {
                 dets = detect_objs(frame(roi));
                 for (auto & det: dets) {
@@ -289,8 +285,6 @@ cv::Rect2d FaceDetector::detect(const cv::Mat & frame, cv::Rect2d predict_roi) {
             }
 
             return det;
-        } else {
-            last_roi = cv::Rect2d(0, 0, frame.cols, frame.rows);
         }
 
         return cv::Rect2d(0, 0, 0, 0);

@@ -36,8 +36,10 @@ foreach(_provider cuda tensorrt)
 endforeach()
 unset(_provider)
 
-# These dependencies are kept as git submodules so builds do not modify the
-# source tree or download mutable content during CMake configuration.
+# These dependencies are kept as git submodules so builds do not download
+# mutable content during CMake configuration. QJoysticks is temporarily
+# patched for Qt5 below and restored right after add_subdirectory, so the
+# submodule working tree stays clean.
 set(QJOYSTICKS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/lib/QJoysticks")
 set(UGLOBALHOTKEY_SOURCE_DIR "${PROJECT_SOURCE_DIR}/lib/UGlobalHotkey")
 
@@ -51,6 +53,7 @@ endif()
 execute_process(
     COMMAND "${CMAKE_COMMAND}"
         "-DQJOYSTICKS_SOURCE_DIR=${QJOYSTICKS_SOURCE_DIR}"
+        "-DQJOYSTICKS_ORIG_FILE=${CMAKE_BINARY_DIR}/QJoysticks_CMakeLists_orig.txt"
         -P "${PROJECT_SOURCE_DIR}/cmake/patch_qjoysticks.cmake"
     RESULT_VARIABLE _qjoysticks_patch_result
 )
@@ -62,6 +65,22 @@ unset(_qjoysticks_patch_result)
 set(QJOYSTICKS_INSTALL OFF CACHE BOOL "" FORCE)
 set(QJOYSTICKS_BUILD_SHARED OFF CACHE BOOL "" FORCE)
 add_subdirectory("${QJOYSTICKS_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/QJoysticks")
+
+# add_subdirectory consumed the patched CMakeLists.txt. Restore the original
+# so the submodule working tree stays clean; otherwise `git submodule update`
+# would silently revert the patch and break future configures.
+file(READ "${CMAKE_BINARY_DIR}/QJoysticks_CMakeLists_orig.txt" _qj_orig)
+file(WRITE "${QJOYSTICKS_SOURCE_DIR}/CMakeLists.txt" "${_qj_orig}")
+file(READ "${QJOYSTICKS_SOURCE_DIR}/CMakeLists.txt" _qj_restored)
+if(NOT _qj_restored STREQUAL _qj_orig)
+    message(FATAL_ERROR
+        "Failed to restore ${QJOYSTICKS_SOURCE_DIR}/CMakeLists.txt after patching; "
+        "the QJoysticks submodule working tree is dirty. "
+        "Run: git -C lib/QJoysticks checkout -- CMakeLists.txt"
+    )
+endif()
+unset(_qj_restored)
+unset(_qj_orig)
 
 if(NOT EXISTS "${UGLOBALHOTKEY_SOURCE_DIR}/uglobalhotkeys.cpp")
     message(FATAL_ERROR

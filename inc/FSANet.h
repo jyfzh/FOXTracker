@@ -10,6 +10,10 @@ class FSANet {
     Ort::Session * session = nullptr;
 public:
     FSANet();
+    ~FSANet() {
+        delete session;
+        session = nullptr;
+    }
 
     Eigen::Vector3d inference(const cv::Mat & image);
 private:

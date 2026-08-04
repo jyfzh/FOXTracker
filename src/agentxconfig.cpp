@@ -108,11 +108,20 @@ void AgentXConfig::on_SlerpRate_Input_valueChanged(int value)
 }
 
 void AgentXConfig::on_Bind_HotKey_clicked(int key) {
+    // QJoysticks signals are delivered on the GUI thread (the singleton is
+    // created here and never moved to another thread), so buttonEvent() may
+    // safely call mbox->done() reentrantly from inside exec(). The dialog is
+    // deleted on this thread only, between binds, never while exec() is
+    // running - hence no use-after-free window.
+    delete mbox;
     mbox = new QMessageBox();
     mbox->setText("Press any key to bind re-center key");
     mbox->setStandardButtons(QMessageBox::Cancel);
     wait_for_bind = key;
     int ret = mbox->exec();
+    delete mbox;
+    mbox = nullptr;
+    wait_for_bind = -1;
     qDebug() << "MBox recturn" << ret;
 }
 

@@ -26,15 +26,6 @@ EKFConfig::EKFConfig(QWidget *parent) :
 
     this->initalize_angle_charts();
     this->initalize_translation_charts();
-
-    Timer = new QTimer(this);
-    connect(Timer, SIGNAL(timeout()), this, SLOT(update_plot()));
-}
-
-void EKFConfig::update_plot() {
-    if(this->isVisible()) {
-//        ekf_disp_charts[activate_chart]->update();
-    }
 }
 
 void EKFConfig::initalize_translation_charts() {
@@ -168,16 +159,12 @@ void EKFConfig::on_detect_pose6d(double t, Pose6DoF pose) {
 
         if (t > settings->disp_duration && t - last_update_t > settings->disp_duration/3) {
             for (int i = 0; i < 6; i ++) {
-                ekf_disp_charts[i]->axes(Qt::Horizontal).first()->setRange(t - settings->disp_duration*2.0/3.0, t + t - settings->disp_duration/3);
+                ekf_disp_charts[i]->axes(Qt::Horizontal).first()->setRange(t - settings->disp_duration*2.0/3.0, t + settings->disp_duration/3);
             }
             last_update_t = t;
         }
     }
 
-}
-
-void EKFConfig::on_Pmat(double t, Matrix19d P) {
-//    Pt_splines[0]->append(t, P(11, 11)*10000);
 }
 
 void EKFConfig::on_detect_pose6d_raw(double t, Pose6DoF pose) {
@@ -209,7 +196,7 @@ void EKFConfig::on_detect_pose6d_raw(double t, Pose6DoF pose) {
 
         if (t > settings->disp_duration && t - last_update_t > settings->disp_duration/3) {
             for (int i = 0; i < 6; i ++) {
-                ekf_disp_charts[i]->axes(Qt::Horizontal).first()->setRange(t - settings->disp_duration*2.0/3.0, t + t - settings->disp_duration/3);
+                ekf_disp_charts[i]->axes(Qt::Horizontal).first()->setRange(t - settings->disp_duration*2.0/3.0, t + settings->disp_duration/3);
             }
             last_update_t = t;
         }

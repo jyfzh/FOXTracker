@@ -3,8 +3,6 @@
 #include <QDebug>
 #include <FlightAgxSettings.h>
 
-#define HIGH_FREQ_ACCELA
-
 PoseRemapper::PoseRemapper(QObject *parent) : QObject(parent), _accela(&(settings->accela_s)), 
         _accela2(&(settings->accela_s))
 {
@@ -12,12 +10,13 @@ PoseRemapper::PoseRemapper(QObject *parent) : QObject(parent), _accela(&(setting
            -1, 0, 0,
             0, 1, 0;
 
-
-#ifdef HIGH_FREQ_ACCELA
     pose_callback_timer = new QTimer;
     connect(pose_callback_timer, SIGNAL(timeout()), this, SLOT(pose_callback_loop()));
     pose_callback_timer->start(1000/POSE_OUTPUT_FREQ);
-#endif
+
+    eul_last = Eigen::Vector3d::Zero();
+    T_last = Eigen::Vector3d::Zero();
+    t_last = 0;
 
     t0 = QDateTime::currentMSecsSinceEpoch()/1000.0;
 }
@@ -44,7 +43,7 @@ const double superexpo(const double &value, double e = 0.5, double g = 0.5)
 {
     double x = double_constrain(value, - 1, 1);
     double gc = double_constrain(g, 0, 0.99);
-    return expo(x, e) * (1 - gc) / (1 - fabsf(x) * gc);
+    return expo(x, e) * (1 - gc) / (1 - std::abs(x) * gc);
 }
 
 double remap(double v, double input_bound, double output_bound, double _expo) {
@@ -58,7 +57,7 @@ void PoseRemapper::pose_callback_loop() {
         double dt = t - t_last;
         t_last = t;
         Eigen::Vector3d eul = eul_last, T = T_last;
-        if (isnan(eul(0)) || isnan(eul(1)) || isnan(eul(2))) {
+        if (!has_pose_data) {
             return;
         }
         if (settings->use_accela) {
@@ -90,6 +89,7 @@ void PoseRemapper::on_pose_data(double t, Pose_ pose_) {
     Eigen::Vector3d T = pose.pos() - initial_pose.pos();
     T = initial_pose.att().inverse() * T;
     auto eul = quat2eulers(Q);
+    has_pose_data = true;
 
     if (settings->use_ft || settings->use_npclient) {
         T.x() = remap(T.x(), settings->inp_bound_trans.x(), settings->out_bound_trans.x(), settings->expo_trans.x());
@@ -105,24 +105,6 @@ void PoseRemapper::on_pose_data(double t, Pose_ pose_) {
         eul_last = eul;
         T_last = T;
 
-#ifndef HIGH_FREQ_ACCELA
-        double t = QDateTime::currentMSecsSinceEpoch()/1000.0 - t0;
-        double dt = t - t_last;
-        t_last = t;
-
-        if (settings->use_accela) {
-            auto ret = _accela.filter(eul_last, T_last, dt);
-            eul = ret.first;
-            T = ret.second;
-            if (settings->double_accela) {
-                auto ret = _accela2.filter(eul, T, dt);
-                eul = ret.first;
-                T = ret.second;
-            }
-        }
-
-        this->send_mapped_posedata(t, std::make_pair(eul, T));
-#endif
     } else {
         this->send_mapped_posedata(t, std::make_pair(eul, T));
     }

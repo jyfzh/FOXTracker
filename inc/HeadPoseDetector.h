@@ -13,6 +13,7 @@
 #include <FlightAgxSettings.h>
 #include <queue>
 #include <mutex>
+#include <atomic>
 #include <fagx_datatype.h>
 #include <KalmanFilter.h>
 #include <inc/FSANet.h>
@@ -25,19 +26,6 @@
 class MainWindow;
 
 class HeadPoseDetector;
-
-class HeadPoseTrackDetectWorker: public QObject {
-    Q_OBJECT
-
-    HeadPoseDetector * hd;
-    bool is_running = false;
-public slots:
-    void run();
-    void stop();
-
-public:
-    HeadPoseTrackDetectWorker(HeadPoseDetector * _hd): hd(_hd) {}
-};
 
 struct HeadPoseDetectionResult {
     bool success = false;
@@ -80,21 +68,20 @@ class HeadPoseDetector: public QObject {
 
     ps3eye_t * ps3cam = nullptr;
 
+    cv::Mat ps3_frame;
+
     std::mutex detect_mtx;
 
     std::mutex detect_frame_mtx;
 
-    bool frame_pending_detect = false;
+    std::atomic<bool> frame_pending_detect{false};
     cv::Mat frame_need_to_detect;
     cv::Rect2d roi_need_to_detect;
 
     std::thread detect_thread;
 
     QThread mainThread;
-    QTimer * main_loop_timer;
-    QThread detectThread;
-
-    cv::Mat rvec_init, tvec_init;
+    QTimer * main_loop_timer = nullptr;
 
     Eigen::Matrix3d Rface, Rcam;
 
@@ -104,14 +91,14 @@ class HeadPoseDetector: public QObject {
     std::vector<cv::Mat> frames;
 
     cv::Rect2d last_roi;
+    cv::Rect2d fsa_roi_last;
     int frame_count = 0;
+    int detect_loop_count = 0;
 
     cv::Ptr<cv::legacy::Tracker> tracker;
 
+    std::mutex preview_mtx;
     cv::Mat preview_image;
-
-    cv::Mat last_clean_frame;
-    std::vector<int> last_ids;
 
     CvPts last_landmark_pts;
 
@@ -136,24 +123,16 @@ class HeadPoseDetector: public QObject {
     //In camera frame
     Eigen::Vector3d estimate_ground_speed_by_tracker(double z, cv::Rect2d roi, cv::Point3f track_spd);
 
-    std::ofstream log;
-
     double t_last;
     Pose pose_last;
     bool last_succ = false;
 
 public:
-    MainWindow * main_window;
-
     HeadPoseDetector(): last_roi(0, 0, 0, 0) {
         cv::setNumThreads(1);
-        log.open(settings->app_path + "/debug.txt", std::ofstream::out);
         is_running = false;
         fd = new FaceDetector;
         lmd = new LandmarkDetector();
-
-        rvec_init = (cv::Mat_<double>(3,1) << 0.0, -0.5, -3);
-        tvec_init = (cv::Mat_<double>(3,1) << 0.0, 0.0, -0.5);
 
         Rface << 0,  1, 0,
                     0,  0, -1, 
@@ -185,8 +164,11 @@ public:
     void pose_callback(double t, Pose pose);
 
 public:
-    cv::Mat & get_preview_image() {
-        return preview_image;
+    cv::Mat get_preview_image() {
+        std::lock_guard<std::mutex> lock(preview_mtx);
+        cv::Mat ret;
+        preview_image.copyTo(ret);
+        return ret;
     }
 
 signals:

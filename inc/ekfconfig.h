@@ -34,7 +34,6 @@ class EKFConfig : public QWidget
 
     QtCharts::QLineSeries * angle_splines[3] = {0};
     QtCharts::QLineSeries * T_splines[3] = {0};
-    QtCharts::QLineSeries * Pt_splines[3] = {0};
     QtCharts::QLineSeries * angle_raw_splines[3] = {0};
     QtCharts::QLineSeries * Traw_splines[3] = {0};
     QtCharts::QLineSeries * w_splines[3] = {0};
@@ -64,12 +63,10 @@ public:
     void setWNoise(double cov_W);
 
     void reset();
-    QTimer* Timer;
 public slots:
     void on_detect_twist(double t, Eigen::Vector3d w, Eigen::Vector3d v);
     void on_detect_pose6d(double t, Pose6DoF pose);
     void on_detect_pose6d_raw(double t, Pose6DoF pose);
-    void on_Pmat(double t, Matrix19d P);
     void set_activate_chart(int _chart);
 
 private slots:
@@ -78,8 +75,6 @@ private slots:
     void on_wnoise_slider_valueChanged(int value);
 
     void on_vnoise_slider_valueChanged(int value);
-
-    void update_plot();
 
     void on_comboBox_currentIndexChanged(int index);
 

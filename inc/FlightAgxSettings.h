@@ -151,7 +151,7 @@ public:
     };
 
 
-    FlightAgxSettings(): hotkey_joystick_names(0),hotkey_joystick_buttons(0) {
+    FlightAgxSettings(): hotkey_joystick_names(2),hotkey_joystick_buttons(2) {
         Eigen::Matrix3d K_eigen;
         Eigen::VectorXd D_eigen(5);
 

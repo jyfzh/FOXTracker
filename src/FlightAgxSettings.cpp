@@ -3,6 +3,7 @@
 #include <fstream>
 
 void FlightAgxSettings::load_from_config_yaml() {
+    try {
     qDebug() << "Read config at " << cfg_name.c_str() << "\n";
     config = YAML::LoadFile(cfg_name);
     detect_duration = config["detect_duration"].as<double>();
@@ -85,6 +86,11 @@ void FlightAgxSettings::load_from_config_yaml() {
 
     accela_s.pos_smoothing = config["accela_pos_smoothing"].as<double>();
     accela_s.pos_deadzone = config["accela_pos_deadzone"].as<double>();
+    } catch (const YAML::Exception &e) {
+        qWarning() << "Failed to load config at" << cfg_name.c_str() << ":" << e.what();
+        qWarning() << "Continuing with default settings.";
+        return;
+    }
 }
 
 

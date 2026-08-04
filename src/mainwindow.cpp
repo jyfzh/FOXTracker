@@ -13,8 +13,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("FOXTracker");
 
-    this->hd.main_window = this;
-
     is_running = false;
     this->on_endbutton_clicked();
     config_menu = new AgentXConfig;
@@ -82,15 +80,12 @@ void MainWindow::create_tray_icon() {
     if (m_tray_icon == nullptr) {
         m_tray_icon = new QSystemTrayIcon(QIcon(":/icons/icon.png"), this);
 
-        connect( m_tray_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(on_show_hide(QSystemTrayIcon::ActivationReason)) );
-
         QAction *quit_action = new QAction( "Exit", m_tray_icon );
         connect( quit_action, SIGNAL(triggered()), this, SLOT(on_exit()) );
 
         QAction *hide_action = new QAction( "Show", m_tray_icon );
         connect( hide_action, SIGNAL(triggered()), this, SLOT(on_show()) );
 
-        connect(m_tray_icon, SIGNAL(DoubleClick()), this, SLOT(on_show()));
         connect(m_tray_icon,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
                 this ,SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
 
@@ -115,11 +110,14 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason) {
 }
 
 void MainWindow::DisplayImage() {
-    cv::Mat & img = hd.get_preview_image();
+    cv::Mat img = hd.get_preview_image();
 //    if (!img.empty()) {
 //        cv::imshow("FOXTracker Preview", img);
 //        cv::waitKey(10);
 //    }
+    if (img.empty()) {
+        return;
+    }
     QImage imdisplay((uchar*)img.data, img.cols, img.rows, img.step, QImage::Format_BGR888); //Converts the CV image into Qt standard format
     ui->preview_camera->setPixmap(QPixmap::fromImage(imdisplay));//display the image in label that is created earlier
 }
@@ -162,9 +160,11 @@ void MainWindow::on_endbutton_clicked()
 }
 
 void MainWindow::start_camera_preview() {
-    Timer = new QTimer(this);
+    if (Timer == nullptr) {
+        Timer = new QTimer(this);
+        connect(Timer, SIGNAL(timeout()), this, SLOT(DisplayImage()));
+    }
     settings->enable_preview = true;
-    connect(Timer, SIGNAL(timeout()), this, SLOT(DisplayImage()));
     Timer->start(30);
     camera_preview_enabled = true;
 }
@@ -172,7 +172,9 @@ void MainWindow::start_camera_preview() {
 void MainWindow::stop_camera_preview() {
     settings->enable_preview = false;
     camera_preview_enabled = false;
-    Timer->stop();
+    if (Timer != nullptr) {
+        Timer->stop();
+    }
 }
 
 void MainWindow::on_toggle_preview_clicked()
@@ -207,10 +209,12 @@ void MainWindow::on_center_keyboard_event() {
 void MainWindow::on_pause_clicked()
 {
     hd.pause();
-    if(Timer->isActive()) {
-        Timer->stop();
-    } else {
-        Timer->start();
+    if (Timer != nullptr) {
+        if (Timer->isActive()) {
+            Timer->stop();
+        } else {
+            Timer->start();
+        }
     }
 }
 
@@ -222,12 +226,10 @@ void MainWindow::on_centerButton_clicked()
 void MainWindow::on_always_on_top_clicked()
 {
     if (is_always_on_top) {
-        QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
         this->setWindowFlags(Qt::WindowTitleHint);
         is_always_on_top = false;
         this->show();
     } else {
-        QApplication::setAttribute(Qt::AA_DisableHighDpiScaling);
         this->setWindowFlags(Qt::FramelessWindowHint|Qt::WindowStaysOnTopHint);
         is_always_on_top = true;
         this->show();

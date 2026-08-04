@@ -11,23 +11,10 @@
 using namespace cv;
 using namespace std;
 
-#define USE_BA
-
 cv::Ptr<cv::legacy::Tracker> create_tracker() {
     return cv::legacy::TrackerMedianFlow::create();
     //return cv::legacy::TrackerMOSSE::create();
 }
-
-
-void HeadPoseTrackDetectWorker::run() {
-    is_running = true;
-//    hd->run_detect_thrad();
-}
-
-void HeadPoseTrackDetectWorker::stop() {
-    is_running = false;
-}
-
 
 
 void HeadPoseDetector::loop() {
@@ -38,8 +25,11 @@ void HeadPoseDetector::loop() {
     TicToc tic_cap;
     Mat frame;
     if (ps3cam != nullptr) {
-        frame = cv::Mat(480, 640, CV_8UC3);
-        ps3eye_grab_frame(ps3cam, frame.data);
+        if (ps3_frame.empty()) {
+            ps3_frame = cv::Mat(480, 640, CV_8UC3);
+        }
+        ps3eye_grab_frame(ps3cam, ps3_frame.data);
+        frame = ps3_frame;
     } else {
         cap >> frame;
     }
@@ -53,6 +43,7 @@ void HeadPoseDetector::loop() {
     t_last = t;
     dt = t - last_t;
     last_t = t;
+    if (dt <= 0 || dt > 1.0) dt = 0.03;
     TicToc tic;
     cv::Mat _show;
     auto ret = detect_head_pose(frame, _show, t, dt);
@@ -89,7 +80,9 @@ void HeadPoseDetector::loop() {
 
     // auto q0_inv = P0.att().inverse();
     auto q0_inv = Eigen::Quaterniond::Identity();
-    this->on_detect_pose6d_raw(t, make_pair(R2ypr(q0_inv*pose_raw.R()), q0_inv*pose_raw.pos()));
+    if (ret.success) {
+        this->on_detect_pose6d_raw(t, make_pair(R2ypr(q0_inv*pose_raw.R()), q0_inv*pose_raw.pos()));
+    }
 
     pose_last = pose;
     last_succ = ret.success;
@@ -101,6 +94,7 @@ void HeadPoseDetector::loop() {
     //     << T(0) << "," << T(1) << "," << T(2) << std::endl;
     pose_callback(t, pose);
     if (settings->enable_preview) {
+        std::lock_guard<std::mutex> lock(preview_mtx);
         _show.copyTo(preview_image);
     }
 }
@@ -138,24 +132,26 @@ void HeadPoseDetector::pose_callback(double t, Pose pose) {
 }
 
 void HeadPoseDetector::run_detect_thread() {
-    static int fc = 0;
-    fc++;
+    detect_loop_count++;
     while(is_running) {
         if (frame_pending_detect) {
            TicToc tic;
            detect_frame_mtx.lock();
            cv::Mat _frame = frame_need_to_detect.clone();
+           cv::Rect2d roi_need = roi_need_to_detect;
            detect_frame_mtx.unlock();
-           cv::Rect2d roi = fd->detect(_frame, roi_need_to_detect);
+           cv::Rect2d roi = fd->detect(_frame, roi_need);
 
-           if (fc%10 == 0) {
+           if (detect_loop_count%10 == 0) {
            qDebug() << "Frontal face detector cost" << tic.toc() << "ms";
            }
            //Track to now image
 
            if (roi.area() < MIN_ROI_AREA) {
                frame_pending_detect = false;
+               detect_frame_mtx.lock();
                roi_need_to_detect = cv::Rect2d(0, 0, _frame.cols, _frame.rows);
+               detect_frame_mtx.unlock();
                qDebug() << "Detect failed in thread";
                Sleep(10);
                continue;
@@ -220,12 +216,17 @@ void HeadPoseDetector::run_thread() {
     } else {
         if(!cap.open(settings->camera_id)) {
             qDebug() << "Not able to open camera" << settings->camera_id <<  "exiting";
-            preview_image = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
-            char warn[100] = {0};
-            sprintf(warn, "Camera ID %d Error. Change it in config menu!!!", settings->camera_id);
-            cv::putText(preview_image, warn, cv::Point2f(20, 240), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+            {
+                std::lock_guard<std::mutex> lock(preview_mtx);
+                preview_image = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
+                char warn[100] = {0};
+                sprintf(warn, "Camera ID %d Error. Change it in config menu!!!", settings->camera_id);
+                cv::putText(preview_image, warn, cv::Point2f(20, 240), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+            }
             is_running = false;
-            detect_thread.join();
+            if (detect_thread.joinable()) {
+                detect_thread.join();
+            }
             return;
         }
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
@@ -234,9 +235,11 @@ void HeadPoseDetector::run_thread() {
     }
 
     qDebug() << "Start Timer with fps of" << settings->fps + 10 << "Cap FPS"<< cap.get(cv::CAP_PROP_FPS);
-    main_loop_timer = new QTimer;
-    main_loop_timer->moveToThread(&mainThread);
-    connect(main_loop_timer, SIGNAL(timeout()), this, SLOT(loop()));
+    if (main_loop_timer == nullptr) {
+        main_loop_timer = new QTimer;
+        main_loop_timer->moveToThread(&mainThread);
+        connect(main_loop_timer, SIGNAL(timeout()), this, SLOT(loop()));
+    }
     main_loop_timer->start(1.0/(settings->fps + 10)*1000);
 
 
@@ -267,8 +270,13 @@ void HeadPoseDetector::stop_slot() {
         qDebug() << "Stop...";
         last_landmark_pts.clear();
         is_running = false;
-        detect_thread.join();
+        paused = false;
+        if (detect_thread.joinable()) {
+            detect_thread.join();
+        }
         main_loop_timer->stop();
+        delete main_loop_timer;
+        main_loop_timer = nullptr;
         ekf.reset();
         //wait a frame
         Sleep(30);
@@ -297,6 +305,7 @@ void HeadPoseDetector::reset_detect() {
     last_roi = cv::Rect2d(0, 0, 0, 0);
     roi_need_to_detect = cv::Rect2d(0, 0, 0, 0);
     first_solve_pose  = true;
+    fsa_roi_last = cv::Rect2d(0, 0, 0, 0);
 }
 
 
@@ -306,7 +315,6 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     Eigen::Vector3d T;
     CvPts landmarks;
     std::vector<cv::Point3f> landmarks_3d;
-    cv::Mat frame_clean;
     cv::Rect2d roi;
     cv::Rect2d fsa_roi;
     cv::Rect2d face_roi;
@@ -317,8 +325,8 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     HeadPoseDetectionResult ret;
 
     frame_count ++;
-    frame_clean = frame.clone();
     if (first_solve_pose) {
+        std::lock_guard<std::mutex> lock(detect_mtx);
         roi = fd->detect(frame, last_roi);
         last_roi = roi;
         if (roi.area() > MIN_ROI_AREA) {
@@ -384,7 +392,9 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
             last_roi = roi;
             detect_mtx.unlock();
             if (new_add_pending_detect) {
+                detect_frame_mtx.lock();
                 roi_need_to_detect  = roi;
+                detect_frame_mtx.unlock();
             }
         } else {
             //std::cout << "Will unlock" << std::endl;
@@ -409,7 +419,6 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     double detect_track_time = tic.toc();
     face_roi = roi;
     fsa_roi = crop_roi(roi, frame, 0.2);
-    static Rect2d fsa_roi_last;
     if (fsa_roi_last.area() < MIN_ROI_AREA) {
         fsa_roi_last = fsa_roi;
     } else {
@@ -502,12 +511,7 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
             draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
         }
 
-        last_clean_frame = frame_clean;
         last_landmark_pts = landmarks;
-        last_ids.clear();
-        for (int i = 0; i < 68; i++) {
-            last_ids.push_back(i);
-        }
 
         return ret;
     }
@@ -573,60 +577,45 @@ void HeadPoseDetector::draw(cv::Mat & frame, cv::Rect2d roi, cv::Rect2d face_roi
 }
 
 std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::vector<cv::Point3f> landmarks_3d, std::vector<float> confs, cv::Mat & frame, Eigen::Vector3d fsa_ypr) {
-    Eigen::Vector3d T;
-    Eigen::Matrix3d R;
+    Eigen::Vector3d T = Eigen::Vector3d::Zero();
+    Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
     std::vector<int> indices{ 0,1,15,16,27,28,29,30,31,32,33,34,35,36,39,42,45 };
 
     std::vector<uchar> pts_mask(landmarks_3d.size());
 
     for (auto i : indices) {
-        pts_mask[i] = 1;
+        // Guard against partial landmark sets (e.g. a detector that returned
+        // fewer points than the fixed index list expects).
+        if (i >= 0 && i < static_cast<int>(pts_mask.size())) {
+            pts_mask[i] = 1;
+        }
     }
 
     reduceVector(landmarks, pts_mask);
     reduceVector(landmarks_3d, pts_mask);
+    // Confidence values accompany the 2D/3D landmark lists, so keep only the
+    // ones belonging to the surviving landmarks; otherwise the BA weights
+    // would be misassigned to different points.
+    if (confs.size() == pts_mask.size()) {
+        reduceVector(confs, pts_mask);
+    }
 
     if (landmarks.size() == 0) {
         return make_pair(false, Pose(T, R));
     }
 
-#ifndef USE_BA
-    auto rvec = rvec_init.clone();
-    auto tvec = tvec_init.clone();
-
-    TicToc tic;
-    std::vector<uchar> inlier(landmarks.size());
-    bool success = cv::solvePnP(landmarks_3d, landmarks, settings->K, settings->D, rvec, tvec, true);
-
-    if (tic.toc() > 0) {
-        qDebug() << "PnP Time" << tic.toc();
-    }
-
-    
-    cv::cv2eigen(tvec, T);
-    cv::Mat Rcv;
-    cv::Rodrigues(rvec, Rcv);
-    cv::cv2eigen(Rcv, R);
-    T = -T;
-
-    if (tic.toc() > 0) {
-        qDebug() << "BA Time" << tic.toc();
-    }
-    CvPts reproject_landmarks;
-    cv::projectPoints(landmarks_3d, rvec, tvec, settings->K, settings->D, reproject_landmarks);
-#else
     TicToc tic_ba;
-    if (confs.size() > 0) {
-        // qDebug() << "Use BA to refine result";
-        auto ba_adjuster = StereoBundleAdjustment::create_from_cv_points(landmarks_3d, landmarks, confs, settings->K, settings->D);
-        // Pose pose_face(R, T);
-        Pose pose_face;
-        auto ret = ba_adjuster->solve(pose_face, false);
-        T = ret.first.pos();
-        R = ret.first.R();
-    }
+    // The dlib landmark path (landmark_detect_method < 0) never fills confs;
+    // synthesize unit confidences so the BA path runs as unweighted least
+    // squares. If confs does not line up with the reduced landmark list, fall
+    // back to unit weights instead of misassigning weights.
+    std::vector<float> confs_synth(landmarks.size(), 1.0f);
+    auto ba_adjuster = StereoBundleAdjustment::create_from_cv_points(landmarks_3d, landmarks, confs.size() == landmarks.size() ? confs : confs_synth, settings->K, settings->D);
+    Pose pose_face;
+    auto ret = ba_adjuster->solve(pose_face, false);
+    T = ret.first.pos();
+    R = ret.first.R();
     bool success = true;
-#endif
     //cv::drawFrameAxes(frame, settings->K, cv::Mat(), rvec, tvec, 0.1, 1);
 
     for (unsigned int i = 0; i < landmarks.size(); i++) {

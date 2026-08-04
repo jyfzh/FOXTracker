@@ -8,7 +8,6 @@
 #include <PoseDataSender.h>
 #include "agentxconfig.h"
 #include "poseremapper.h"
-#include <QShortcut>
 #include "uglobalhotkeys.h"
 
 QT_BEGIN_NAMESPACE
@@ -61,7 +60,7 @@ private slots:
     void on_quit_clicked();
 
 private:
-    QTimer* Timer;
+    QTimer* Timer = nullptr;
     bool camera_preview_enabled = false;
     void start_camera_preview();
     void stop_camera_preview();
@@ -71,7 +70,6 @@ private:
 
     AgentXConfig * config_menu = nullptr;
 
-    QShortcut * m_globalShortcut;
     UGlobalHotkeys *hotkeyManager;
 };
 #endif // MAINWINDOW_H

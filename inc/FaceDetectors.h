@@ -9,7 +9,6 @@
 
 class FaceDetector {
     cv::dnn::Net head_detector;
-    cv::Rect2d last_roi;
 public:
     FaceDetector() {
         printf("Path %s", settings->protoPath.c_str());
@@ -58,7 +57,12 @@ class LandmarkDetector {
 public:
     LandmarkDetector();
 
-    virtual ~LandmarkDetector() {}
+    virtual ~LandmarkDetector() {
+        for (auto * s : sessions) {
+            delete s;
+        }
+        sessions.clear();
+    }
 
     virtual Landmarks detect(cv::Mat & frame, cv::Rect roi);
 

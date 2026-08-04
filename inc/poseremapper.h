@@ -16,6 +16,7 @@ class PoseRemapper : public QObject
 
     Eigen::Matrix3d Rcam;
     QTimer * pose_callback_timer;
+    bool has_pose_data = false;
     double t_last;
     Eigen::Vector3d eul_last, T_last;
     double t0;

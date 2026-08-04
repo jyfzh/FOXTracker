@@ -10,7 +10,7 @@ class PoseDataSender: public QObject {
     void send_data_udp(double t, Pose6DoF pose);
 public:
     PoseDataSender() {
-        udpsock = new QUdpSocket(nullptr);
+        udpsock = new QUdpSocket(this);
         ft = new freetrack;
         bool success = ft->initialize();
         if (!success) {
@@ -18,6 +18,11 @@ public:
         } else {
             qDebug("Initialize freetrack OK");
         }
+    }
+
+    ~PoseDataSender() {
+        delete ft;
+        ft = nullptr;
     }
 
 public slots:
