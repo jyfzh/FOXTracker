@@ -2,17 +2,12 @@
 #include "HeadPoseDetector.h"
 #include <QApplication>
 #include <opencv2/opencv.hpp>
-#include<QDebug>
+#include <QDebug>
 #include "FlightAgxSettings.h"
 #include <QFontDatabase>
 
 FlightAgxSettings * settings = nullptr;
 
-#ifdef Q_OS_WIN
-#   ifdef main
-#      undef main
-#   endif
-#endif
 int main(int argc, char *argv[])
 {
     qRegisterMetaType<Pose_>("Pose_");
@@ -20,11 +15,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<Eigen::Vector3d>("Eigen::Vector3d");
     qRegisterMetaType<Matrix19d>("Matrix19d");
 
-    qInfo() << "Welcome! pliots";
-    if (argc > 1 && std::string(argv[1]) == "small") {
-    } else {
-        QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    }
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
     QApplication a(argc, argv);
 

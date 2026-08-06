@@ -33,6 +33,7 @@ Thumbs.db
 *.rc
 
 # Qt and IDE generated files
+.qtcreator
 
 # xemacs temporary files
 *.flc

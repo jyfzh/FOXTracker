@@ -22,42 +22,38 @@ class MainWindow : public QMainWindow
     PoseDataSender data_sender;
     PoseRemapper remapper;
     bool is_running = false;
-    bool is_always_on_top = false;
 
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-public slots:
-    void on_show();
-    void on_exit();
+protected:
+    void closeEvent(QCloseEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
 private slots:
-    void on_endbutton_clicked();
-
-    void on_toggle_preview_clicked();
-
-    void on_gamemode_clicked();
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
-
-    void DisplayImage();
 
     void on_pose6d_data(double t, Pose6DoF _pose);
     void on_pose6d_data_raw(double t, Pose6DoF _pose);
-
-    void on_config_button_clicked();
 
     void on_center_keyboard_event();
 
     void handle_global_hotkeys(unsigned int _id);
 
-    void on_pause_clicked();
+    void on_actionstart_triggered();
 
-    void on_centerButton_clicked();
+    void on_actionstop_triggered();
 
-    void on_always_on_top_clicked();
+    void on_actionpause_triggered();
 
-    void on_quit_clicked();
+    void on_actioncenter_triggered();
+
+    void on_actionconfig_triggered();
+
+    void on_actionalways_on_top_toggled(bool arg1);
+
+    void on_actiontoggle_preview_triggered();
 
 private:
     QTimer* Timer = nullptr;
@@ -66,9 +62,9 @@ private:
     void stop_camera_preview();
     Ui::MainWindow *ui;
     void create_tray_icon();
-    QSystemTrayIcon * m_tray_icon = nullptr;
 
     AgentXConfig * config_menu = nullptr;
+    QSystemTrayIcon* m_tray_icon = nullptr;
 
     UGlobalHotkeys *hotkeyManager;
 };

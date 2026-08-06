@@ -3,7 +3,9 @@
 #include <FlightAgxSettings.h>
 #include <QAction>
 #include <QMenu>
-#include "ekfconfig.h"
+#include <QDebug>
+#include <QScreen>
+
 #include "agentxconfig.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,46 +15,56 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("FOXTracker");
 
-    is_running = false;
-    this->on_endbutton_clicked();
-    config_menu = new AgentXConfig;
+    setWindowFlags(windowFlags() | Qt::WindowSystemMenuHint);
 
+    emit hd.start();
+    this->remapper.reset_center();
+    this->start_camera_preview();
+    is_running = true;
 
     connect(&remapper, &PoseRemapper::send_mapped_posedata, this, &MainWindow::on_pose6d_data);
     connect(&remapper, &PoseRemapper::send_mapped_posedata, &data_sender, &PoseDataSender::on_pose6d_data);
-
     connect(&hd, &HeadPoseDetector::on_detect_pose, &remapper, &PoseRemapper::on_pose_data, Qt::QueuedConnection);
+    connect(&hd, &HeadPoseDetector::on_detect_pose6d_raw, this, &MainWindow::on_pose6d_data_raw);
 
-    connect(config_menu, &AgentXConfig::reset_camera, &hd, &HeadPoseDetector::reset);
-    connect(config_menu, &AgentXConfig::recenter_hotkey_pressed, this, &MainWindow::on_center_keyboard_event);
-    connect(config_menu, &AgentXConfig::set_camera_gain, &hd, &HeadPoseDetector::set_gain);
-    connect(config_menu, &AgentXConfig::set_camera_expo, &hd, &HeadPoseDetector::set_expo);
-    connect(config_menu, &AgentXConfig::set_camera_auto_expo, &hd, &HeadPoseDetector::set_auto_expo);
-
-//    connect(&hd, &HeadPoseDetector::on_detect_pose6d, config_menu->ekf_config_menu(),
-//            &EKFConfig::on_detect_pose6d);
-    connect(&hd, &HeadPoseDetector::on_detect_pose6d_raw, this,
-        &MainWindow::on_pose6d_data_raw);
-//    connect(&hd, &HeadPoseDetector::on_detect_twist, config_menu->ekf_config_menu(),
-//            &EKFConfig::on_detect_twist);
-
-    ui->time_disp->setDigitCount(5);
-    ui->time_disp->setSmallDecimalPoint(false);
-    ui->x_disp->setDigitCount(4);
-    ui->y_disp->setDigitCount(4);
-    ui->z_disp->setDigitCount(4);
-    ui->yaw_disp->setDigitCount(4);
-    ui->pitch_disp->setDigitCount(4);
-    ui->roll_disp->setDigitCount(4);
-
-    ui->fps_disp->setDigitCount(3);
+    // connect(&hd, &HeadPoseDetector::on_detect_pose6d, config_menu->ekf_config_menu(),
+    //         &EKFConfig::on_detect_pose6d);
+    // connect(&hd, &HeadPoseDetector::on_detect_twist, config_menu->ekf_config_menu(),
+    //         &EKFConfig::on_detect_twist);
 
     hotkeyManager = new UGlobalHotkeys();
     hotkeyManager->registerHotkey("alt+c", 1);
 
     connect(hotkeyManager, &UGlobalHotkeys::activated, this, &MainWindow::handle_global_hotkeys);
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    emit hd.stop();
+    this->stop_camera_preview();
+    is_running = false;
+
+    event->accept();
+}
 
 
+void MainWindow::changeEvent(QEvent *event)
+{
+    if(event->type() == QEvent::WindowStateChange)
+    {
+        if(windowState() == Qt::WindowMinimized) {
+            this->stop_camera_preview();
+            hide();
+            create_tray_icon();
+        }
+    }
+
+    QMainWindow::changeEvent(event);
 }
 
 void MainWindow::handle_global_hotkeys(unsigned int _id) {
@@ -61,30 +73,20 @@ void MainWindow::handle_global_hotkeys(unsigned int _id) {
     }
 }
 
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::on_show() {
-   //start_camera_preview();
-   QTimer::singleShot(0, this, SLOT(show()));
-}
-
-void MainWindow::on_exit() {
-   QCoreApplication::quit();
-}
-
 void MainWindow::create_tray_icon() {
     if (m_tray_icon == nullptr) {
         m_tray_icon = new QSystemTrayIcon(QIcon(":/icons/icon.png"), this);
 
         QAction *quit_action = new QAction( "Exit", m_tray_icon );
-        connect( quit_action, SIGNAL(triggered()), this, SLOT(on_exit()) );
+        connect( quit_action, &QAction::triggered, this, [](){
+            QCoreApplication::quit();
+        } );
 
         QAction *hide_action = new QAction( "Show", m_tray_icon );
-        connect( hide_action, SIGNAL(triggered()), this, SLOT(on_show()) );
+        connect( hide_action, &QAction::triggered, this, [this](){
+            this->show();
+            this->showNormal();
+        } );
 
         connect(m_tray_icon,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
                 this ,SLOT(iconActivated(QSystemTrayIcon::ActivationReason)));
@@ -94,7 +96,6 @@ void MainWindow::create_tray_icon() {
         tray_icon_menu->addAction( quit_action );
 
         m_tray_icon->setContextMenu( tray_icon_menu );
-
         m_tray_icon->show();
     }
 }
@@ -103,25 +104,17 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason) {
     switch (reason) {
        case QSystemTrayIcon::Trigger:
        case QSystemTrayIcon::DoubleClick:
-            this->on_show();
+            QTimer::singleShot(0, this, [this](){
+                this->showNormal();
+                this->raise();
+                this->activateWindow();
+                show();
+            });
+            start_camera_preview();
        default:
         break;
     }
 }
-
-void MainWindow::DisplayImage() {
-    cv::Mat img = hd.get_preview_image();
-//    if (!img.empty()) {
-//        cv::imshow("FOXTracker Preview", img);
-//        cv::waitKey(10);
-//    }
-    if (img.empty()) {
-        return;
-    }
-    QImage imdisplay((uchar*)img.data, img.cols, img.rows, img.step, QImage::Format_BGR888); //Converts the CV image into Qt standard format
-    ui->preview_camera->setPixmap(QPixmap::fromImage(imdisplay));//display the image in label that is created earlier
-}
-
 
 void MainWindow::on_pose6d_data(double t, Pose6DoF _pose) {
     ui->time_disp->display(t);
@@ -143,26 +136,17 @@ void MainWindow::on_pose6d_data_raw(double t, Pose6DoF _pose) {
     ui->fps_disp->display(fps);
 }
 
-void MainWindow::on_endbutton_clicked()
-{
-    if(is_running) {
-        emit hd.stop();
-        this->stop_camera_preview();
-        is_running = false;
-        ui->endbutton->setText("START");
-    } else {
-        emit hd.start();
-        this->remapper.reset_center();
-        this->start_camera_preview();
-        is_running = true;
-        ui->endbutton->setText("STOP");
-    }
-}
-
 void MainWindow::start_camera_preview() {
     if (Timer == nullptr) {
         Timer = new QTimer(this);
-        connect(Timer, SIGNAL(timeout()), this, SLOT(DisplayImage()));
+        connect(Timer, &QTimer::timeout, this, [this](){
+            cv::Mat img = hd.get_preview_image();
+            if (img.empty()) {
+                return;
+            }
+            QImage imdisplay((uchar*)img.data, img.cols, img.rows, img.step, QImage::Format_BGR888);
+            ui->preview_camera->setPixmap(QPixmap::fromImage(imdisplay));
+        });
     }
     settings->enable_preview = true;
     Timer->start(30);
@@ -177,36 +161,33 @@ void MainWindow::stop_camera_preview() {
     }
 }
 
-void MainWindow::on_toggle_preview_clicked()
-{
-    if (camera_preview_enabled) {
-        this->stop_camera_preview();
-    } else {
-        this->start_camera_preview();
-    }
-}
-
-void MainWindow::on_gamemode_clicked()
-{
-    this->stop_camera_preview();
-    create_tray_icon();
-    QTimer::singleShot(10, this, SLOT(hide()));
-}
-
-void MainWindow::on_config_button_clicked()
-{
-    config_menu->show();
-}
-
-
-
 void MainWindow::on_center_keyboard_event() {
 //    hd.reset_detect();
     remapper.reset_center();
 }
 
+void MainWindow::on_actionstart_triggered()
+{
+    if(!is_running) {
+        emit hd.start();
+        this->remapper.reset_center();
+        this->start_camera_preview();
+        is_running = true;
+    }
+}
 
-void MainWindow::on_pause_clicked()
+
+void MainWindow::on_actionstop_triggered()
+{
+    if(is_running) {
+        emit hd.stop();
+        this->stop_camera_preview();
+        is_running = false;
+    }
+}
+
+
+void MainWindow::on_actionpause_triggered()
 {
     hd.pause();
     if (Timer != nullptr) {
@@ -218,25 +199,48 @@ void MainWindow::on_pause_clicked()
     }
 }
 
-void MainWindow::on_centerButton_clicked()
+void MainWindow::on_actioncenter_triggered()
 {
     on_center_keyboard_event();
 }
 
-void MainWindow::on_always_on_top_clicked()
+
+void MainWindow::on_actionconfig_triggered()
 {
-    if (is_always_on_top) {
-        this->setWindowFlags(Qt::WindowTitleHint);
-        is_always_on_top = false;
-        this->show();
-    } else {
-        this->setWindowFlags(Qt::FramelessWindowHint|Qt::WindowStaysOnTopHint);
-        is_always_on_top = true;
-        this->show();
+    if(config_menu == nullptr) {
+        config_menu = new AgentXConfig(this);
+
+        connect(config_menu, &AgentXConfig::reset_camera, &hd, &HeadPoseDetector::reset);
+        connect(config_menu, &AgentXConfig::recenter_hotkey_pressed, this, &MainWindow::on_center_keyboard_event);
+        connect(config_menu, &AgentXConfig::set_camera_gain, &hd, &HeadPoseDetector::set_gain);
+        connect(config_menu, &AgentXConfig::set_camera_expo, &hd, &HeadPoseDetector::set_expo);
+        connect(config_menu, &AgentXConfig::set_camera_auto_expo, &hd, &HeadPoseDetector::set_auto_expo);
     }
+    config_menu->show();
 }
 
-void MainWindow::on_quit_clicked()
+
+void MainWindow::on_actionalways_on_top_toggled(bool arg1)
 {
-    QCoreApplication::quit();
+    Qt::WindowFlags flags = this->windowFlags();
+
+    if (arg1) {
+        flags |= Qt::WindowStaysOnTopHint;
+        flags |= Qt::FramelessWindowHint;
+    } else {
+        flags &= ~Qt::WindowStaysOnTopHint;
+        flags &= ~Qt::FramelessWindowHint;
+    }
+
+    this->setWindowFlags(flags);
+    this->show();
+}
+
+void MainWindow::on_actiontoggle_preview_triggered()
+{
+    if (camera_preview_enabled) {
+        this->stop_camera_preview();
+    } else {
+        this->start_camera_preview();
+    }
 }
