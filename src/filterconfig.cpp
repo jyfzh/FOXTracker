@@ -61,8 +61,8 @@ FilterConfig::~FilterConfig()
 }
 
 void FilterConfig::on_rot_smooth_sld_valueChanged(int value)
-{  
-    double v = value/100.0;
+{
+    double v = value / 100.0;
     settings->accela_s.rot_smoothing = range_v(v, rot_smooth_min, rot_smooth_max);
     settings->set_value<double>("accela_rot_smoothing", settings->accela_s.rot_smoothing);
     ui->rot_smooth_label->setText(QString::number(settings->accela_s.rot_smoothing));

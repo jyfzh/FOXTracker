@@ -41,7 +41,6 @@ AgentXConfig::AgentXConfig(QWidget *parent) :
 //    ui->FSAPnPOffset_input->setValue(settings->pitch_offset_fsa_pnp*RAD2DEG/20*100);
 
     ui->LandmarkModel_input->setValue(settings->landmark_detect_method);
-
     ui->CameraGain_Input->setValue(settings->camera_gain*100);
     ui->CameraExp_Input->setValue(settings->camera_expo*100);
     ui->AutoExpo_Input->setChecked(settings->enable_auto_expo);
@@ -73,7 +72,6 @@ void AgentXConfig::on_SendUDP_Check_stateChanged(int arg1)
 
 void AgentXConfig::on_buttonBox_accepted()
 {
-
     if(settings->udp_host != ui->IP_Input->text().toUtf8().constData() || settings->port!=ui->Port_Input->value()) {
         settings->udp_host = ui->IP_Input->text().toUtf8().constData();
         settings->set_value<std::string>("udp_host", settings->udp_host);
@@ -213,7 +211,6 @@ void AgentXConfig::update_hotkeys() {
 
 void AgentXConfig::on_CameraGain_Input_valueChanged(int value)
 {
-//    qDebug("Set camera gain");
     set_camera_gain(((double)value)/100.0);
     settings->camera_gain = ((double)value)/100.0;
     settings->set_value("camera_gain", ((double)value)/100.0);

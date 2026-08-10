@@ -11,10 +11,7 @@
 #include <filter_accela.h>
 #include <utils.h>
 
-accela::accela(settings_accela * _s):
-    s(_s)
-{
-}
+accela::accela(settings_accela * _s): s(_s) {}
 
 template<typename F>
 static void do_deltas(const double* deltas, double* output, F&& fun)

@@ -11,8 +11,6 @@ inline cv::Rect2d rect2roi(dlib::rectangle ret) {
     return cv::Rect2d(ret.left(), ret.top(), ret.right() - ret.left(), ret.bottom() - ret.top());
 }
 
-
-
 LandmarkDetector::LandmarkDetector():
     mean_scaling(0.485f, 0.456f, 0.406f),
     std_scaling(0.229f, 0.224f, 0.225f) {

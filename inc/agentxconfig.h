@@ -23,6 +23,7 @@ public:
     void buttonEvent (const QJoystickButtonEvent& event);
 
     void update_hotkeys();
+
 private slots:
     void on_EKF_Check_stateChanged(int arg1);
 
