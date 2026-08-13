@@ -16,9 +16,6 @@
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
     <widget class="QGroupBox" name="groupBox">
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(186, 186, 186);</string>
-     </property>
      <property name="title">
       <string>General</string>
      </property>
@@ -97,9 +94,6 @@
     <widget class="QGroupBox" name="groupBox_3">
      <property name="layoutDirection">
       <enum>Qt::LayoutDirection::LeftToRight</enum>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(189, 189, 189);</string>
      </property>
      <property name="title">
       <string>Camera</string>
@@ -221,9 +215,6 @@
    </item>
    <item row="0" column="1">
     <widget class="QGroupBox" name="groupBox_2">
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(170, 170, 170);</string>
-     </property>
      <property name="title">
       <string>Accuracy</string>
      </property>
@@ -269,9 +260,6 @@
    </item>
    <item row="2" column="1">
     <widget class="QGroupBox" name="groupBox_4">
-     <property name="styleSheet">
-      <string notr="true">background-color: rgb(162, 162, 162);</string>
-     </property>
      <property name="title">
       <string>Hotkeys</string>
      </property>
@@ -285,9 +273,6 @@
       </item>
       <item row="2" column="2" colspan="2">
        <widget class="QLabel" name="Hotkey2_Joystick">
-        <property name="styleSheet">
-         <string notr="true">font: 10pt &quot;Source Code Pro&quot;;</string>
-        </property>
         <property name="text">
          <string>JoyStick2</string>
         </property>

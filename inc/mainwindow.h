@@ -66,5 +66,8 @@ private:
     QSystemTrayIcon* m_tray_icon = nullptr;
 
     UGlobalHotkeys *hotkeyManager;
+
+    QLabel *status_fps_label;
+    QLabel *status_time_label;
 };
 #endif // MAINWINDOW_H

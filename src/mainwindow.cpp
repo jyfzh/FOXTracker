@@ -15,6 +15,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("FOXTracker");
 
+    status_fps_label = new QLabel("FPS: 0", this);
+    status_fps_label->setFixedWidth(120);
+    statusBar()->addPermanentWidget(status_fps_label);
+    status_time_label = new QLabel("Time: 0", this);
+    status_time_label->setFixedWidth(120);
+    statusBar()->addPermanentWidget(status_time_label);
+
     setWindowFlags(windowFlags() | Qt::WindowSystemMenuHint);
 
     emit hd.start();
@@ -124,6 +131,8 @@ void MainWindow::on_pose6d_data(double t, Pose6DoF _pose) {
     ui->yaw_disp->display(_pose.first.x());
     ui->pitch_disp->display(_pose.first.y());
     ui->roll_disp->display(_pose.first.z());
+
+    status_time_label->setText("Time: " + QString::number(t));
 }
 
 void MainWindow::on_pose6d_data_raw(double t, Pose6DoF _pose) {
@@ -134,6 +143,7 @@ void MainWindow::on_pose6d_data_raw(double t, Pose6DoF _pose) {
     }
     t_last = t;
     ui->fps_disp->display(fps);
+    status_fps_label->setText("FPS: " + QString::number(fps));
 }
 
 void MainWindow::start_camera_preview() {

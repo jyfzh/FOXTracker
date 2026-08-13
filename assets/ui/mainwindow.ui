@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>869</width>
-    <height>482</height>
+    <width>860</width>
+    <height>550</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -66,7 +66,7 @@
        <enum>QTabWidget::TabPosition::West</enum>
       </property>
       <property name="tabShape">
-       <enum>QTabWidget::TabShape::Triangular</enum>
+       <enum>QTabWidget::TabShape::Rounded</enum>
       </property>
       <property name="currentIndex">
        <number>0</number>
@@ -81,7 +81,7 @@
        <bool>true</bool>
       </property>
       <property name="tabBarAutoHide">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <widget class="QWidget" name="preview">
        <attribute name="title">
@@ -445,7 +445,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>869</width>
+     <width>860</width>
      <height>22</height>
     </rect>
    </property>
@@ -484,6 +484,7 @@
    <addaction name="menu"/>
    <addaction name="menuconfig"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionstart">
    <property name="text">
     <string>start</string>
