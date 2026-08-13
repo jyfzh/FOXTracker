@@ -35,7 +35,7 @@ include("${PROJECT_SOURCE_DIR}/cmake/Dependencies.cmake")
 add_subdirectory(lib)
 
 set(FOXTRACKER_SOURCES
-    src/agentxconfig.cpp
+    src/settingconfig.cpp
     src/ekfconfig.cpp
     src/FaceDetectors.cpp
     src/filterconfig.cpp
@@ -48,10 +48,11 @@ set(FOXTRACKER_SOURCES
     src/PoseDataSender.cpp
     src/poseremapper.cpp
     src/stereo_bundle_adjustment.cpp
+    # src/config.cpp
 )
 
 set(FOXTRACKER_FORMS
-    "${PROJECT_SOURCE_DIR}/assets/ui/agentxconfig.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/settingconfig.ui"
     "${PROJECT_SOURCE_DIR}/assets/ui/ekfconfig.ui"
     "${PROJECT_SOURCE_DIR}/assets/ui/filterconfig.ui"
     "${PROJECT_SOURCE_DIR}/assets/ui/mainwindow.ui"
@@ -61,7 +62,7 @@ add_executable(FOXTracker WIN32
     ${FOXTRACKER_SOURCES}
     ${FOXTRACKER_FORMS}
     "${PROJECT_SOURCE_DIR}/assets/main.qrc"
-    "${PROJECT_SOURCE_DIR}/inc/agentxconfig.h"
+    "${PROJECT_SOURCE_DIR}/inc/settingconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/ekfconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/filterconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/HeadPoseDetector.h"
@@ -72,6 +73,11 @@ add_executable(FOXTracker WIN32
 set_target_properties(FOXTracker PROPERTIES
     AUTOUIC_SEARCH_PATHS "${PROJECT_SOURCE_DIR};${PROJECT_SOURCE_DIR}/assets/ui"
 )
+
+# SDL's SDL_main.h (pulled in transitively via QJoysticks) redefines `main`
+# to `SDL_main`, which clobbers our real `main()` and breaks Qt's WinMain
+# (from qtmain.lib). Tell SDL we already provide our own entry point.
+target_compile_definitions(FOXTracker PRIVATE SDL_MAIN_HANDLED)
 
 target_include_directories(FOXTracker PRIVATE
     "${PROJECT_SOURCE_DIR}"

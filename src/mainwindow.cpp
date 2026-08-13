@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QScreen>
 
-#include "agentxconfig.h"
+#include "settingconfig.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)

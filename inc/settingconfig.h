@@ -8,16 +8,16 @@
 #include <QJoysticks.h>
 
 namespace Ui {
-class AgentXConfig;
+class SettingConfig;
 }
 
-class AgentXConfig : public QWidget
+class SettingConfig : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit AgentXConfig(QWidget *parent = nullptr);
-    ~AgentXConfig();
+    explicit SettingConfig(QWidget *parent = nullptr);
+    ~SettingConfig();
     EKFConfig * ekf_config_menu();
 
     void buttonEvent (const QJoystickButtonEvent& event);
@@ -64,7 +64,7 @@ signals:
     void set_camera_auto_expo(bool enable_auto_expo);
 
 private:
-    Ui::AgentXConfig *ui;
+    Ui::SettingConfig *ui;
     QMessageBox * mbox = nullptr;
     int wait_for_bind = -1;
 };

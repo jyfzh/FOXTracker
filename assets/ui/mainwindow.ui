@@ -430,7 +430,7 @@
         <string>Filter</string>
        </attribute>
       </widget>
-      <widget class="AgentXConfig" name="Setting">
+      <widget class="SettingConfig" name="Setting">
        <attribute name="title">
         <string>Setting</string>
        </attribute>
@@ -549,9 +549,9 @@
    <header>filterconfig.h</header>
   </customwidget>
   <customwidget>
-   <class>AgentXConfig</class>
+   <class>SettingConfig</class>
    <extends>QWidget</extends>
-   <header>agentxconfig.h</header>
+   <header>settingconfig.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

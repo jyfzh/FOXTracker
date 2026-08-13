@@ -1,12 +1,13 @@
-#include "agentxconfig.h"
-#include "ui_agentxconfig.h"
+#include "settingconfig.h"
+#include "settingconfig.h"
+#include "ui_settingconfig.h"
 #include "FlightAgxSettings.h"
 #include <string>
 #include <QMessageBox>
 
-AgentXConfig::AgentXConfig(QWidget *parent) :
+SettingConfig::SettingConfig(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::AgentXConfig)
+    ui(new Ui::SettingConfig)
 {
     ui->setupUi(this);
     this->setWindowTitle("Config");
@@ -17,7 +18,7 @@ AgentXConfig::AgentXConfig(QWidget *parent) :
     qDebug() << "Joysicks" << joysticks.size();
 
     QJoysticks::getInstance()->setVirtualJoystickEnabled (true);
-    connect(QJoysticks::getInstance(), &QJoysticks::buttonEvent, this, &AgentXConfig::buttonEvent);
+    connect(QJoysticks::getInstance(), &QJoysticks::buttonEvent, this, &SettingConfig::buttonEvent);
 
     if(settings->use_ft || settings->use_npclient) {
         ui->DCtrl_Check->setCheckState(Qt::Checked);
@@ -46,31 +47,31 @@ AgentXConfig::AgentXConfig(QWidget *parent) :
     ui->AutoExpo_Input->setChecked(settings->enable_auto_expo);
 }
 
-AgentXConfig::~AgentXConfig()
+SettingConfig::~SettingConfig()
 {
     delete ui;
 }
 
-void AgentXConfig::on_EKF_Check_stateChanged(int arg1)
+void SettingConfig::on_EKF_Check_stateChanged(int arg1)
 {
     settings->use_ekf = arg1;
     settings->set_value<bool>("use_ekf", arg1);
 }
 
-void AgentXConfig::on_DCtrl_Check_stateChanged(int arg1)
+void SettingConfig::on_DCtrl_Check_stateChanged(int arg1)
 {
     settings->use_ft = settings->use_npclient = arg1;
     settings->set_value<bool>("use_ft", arg1);
     settings->set_value<bool>("use_npclient", arg1);
 }
 
-void AgentXConfig::on_SendUDP_Check_stateChanged(int arg1)
+void SettingConfig::on_SendUDP_Check_stateChanged(int arg1)
 {
     settings->send_posedata_udp = arg1;
     settings->set_value<bool>("send_posedata_udp", arg1);
 }
 
-void AgentXConfig::on_buttonBox_accepted()
+void SettingConfig::on_buttonBox_accepted()
 {
     if(settings->udp_host != ui->IP_Input->text().toUtf8().constData() || settings->port!=ui->Port_Input->value()) {
         settings->udp_host = ui->IP_Input->text().toUtf8().constData();
@@ -97,7 +98,7 @@ void AgentXConfig::on_buttonBox_accepted()
     settings->write_to_file();
 }
 
-void AgentXConfig::on_SlerpRate_Input_valueChanged(int value)
+void SettingConfig::on_SlerpRate_Input_valueChanged(int value)
 {
     settings->fsa_pnp_mixture_rate = ((double)value)/100;
     settings->set_value<double>("fsa_pnp_mixture_rate", settings->fsa_pnp_mixture_rate);
@@ -105,7 +106,7 @@ void AgentXConfig::on_SlerpRate_Input_valueChanged(int value)
     qDebug() << "fsa_pnp_mixture_rate" << settings->fsa_pnp_mixture_rate;
 }
 
-void AgentXConfig::on_Bind_HotKey_clicked(int key) {
+void SettingConfig::on_Bind_HotKey_clicked(int key) {
     // QJoysticks signals are delivered on the GUI thread (the singleton is
     // created here and never moved to another thread), so buttonEvent() may
     // safely call mbox->done() reentrantly from inside exec(). The dialog is
@@ -123,7 +124,7 @@ void AgentXConfig::on_Bind_HotKey_clicked(int key) {
     qDebug() << "MBox recturn" << ret;
 }
 
-void AgentXConfig::buttonEvent (const QJoystickButtonEvent& event) {
+void SettingConfig::buttonEvent (const QJoystickButtonEvent& event) {
     std::string joyname = event.joystick->name.toUtf8().constData();
     int btn_id =  event.button;
     if(event.pressed && wait_for_bind >= 0) {
@@ -156,19 +157,19 @@ void AgentXConfig::buttonEvent (const QJoystickButtonEvent& event) {
 }
 
 
-void AgentXConfig::on_Bind_HotKey2_clicked() {
+void SettingConfig::on_Bind_HotKey2_clicked() {
     on_Bind_HotKey_clicked(1);
     ui->Hotkey2_Joystick->setText(settings->hotkey_joystick_names[1].c_str());
     ui->Hotkey2_Button->setText(QString::number(settings->hotkey_joystick_buttons[1]));
 }
 
-void AgentXConfig::on_Bind_HotKey1_clicked() {
+void SettingConfig::on_Bind_HotKey1_clicked() {
     on_Bind_HotKey_clicked(0);
     ui->Hotkey1_Joystick->setText(settings->hotkey_joystick_names[0].c_str());
     ui->Hotkey1_Button->setText(QString::number(settings->hotkey_joystick_buttons[0]));
 }
 
-void AgentXConfig::on_FSAPnPOffset_input_valueChanged(int value)
+void SettingConfig::on_FSAPnPOffset_input_valueChanged(int value)
 {
     float v = ((float)value)/100;
     float offset_degree = v * 20;
@@ -178,13 +179,13 @@ void AgentXConfig::on_FSAPnPOffset_input_valueChanged(int value)
     //ui->FSAPnPOffset_disp->display(offset_degree);
 }
 
-void AgentXConfig::on_LandmarkModel_input_valueChanged(int value)
+void SettingConfig::on_LandmarkModel_input_valueChanged(int value)
 {
     settings->set_landmark_level(value);
     settings->set_value("landmark_detect_method", value);
 }
 
-void AgentXConfig::on_Unbind_HotKey1_clicked()
+void SettingConfig::on_Unbind_HotKey1_clicked()
 {
     settings->hotkey_joystick_names[0] = "";
     settings->hotkey_joystick_buttons[0] = 0;
@@ -192,7 +193,7 @@ void AgentXConfig::on_Unbind_HotKey1_clicked()
     update_hotkeys();
 }
 
-void AgentXConfig::on_Unbind_HotKey2_clicked()
+void SettingConfig::on_Unbind_HotKey2_clicked()
 {
     settings->hotkey_joystick_names[1] = "";
     settings->hotkey_joystick_buttons[1] = 0;
@@ -200,7 +201,7 @@ void AgentXConfig::on_Unbind_HotKey2_clicked()
     update_hotkeys();
 }
 
-void AgentXConfig::update_hotkeys() {
+void SettingConfig::update_hotkeys() {
     ui->Hotkey1_Joystick->setText(settings->hotkey_joystick_names[0].c_str());
     ui->Hotkey1_Button->setText(QString::number(settings->hotkey_joystick_buttons[0]));
 
@@ -209,21 +210,21 @@ void AgentXConfig::update_hotkeys() {
 }
 
 
-void AgentXConfig::on_CameraGain_Input_valueChanged(int value)
+void SettingConfig::on_CameraGain_Input_valueChanged(int value)
 {
     set_camera_gain(((double)value)/100.0);
     settings->camera_gain = ((double)value)/100.0;
     settings->set_value("camera_gain", ((double)value)/100.0);
 }
 
-void AgentXConfig::on_CameraExp_Input_valueChanged(int value)
+void SettingConfig::on_CameraExp_Input_valueChanged(int value)
 {
     set_camera_expo(((double)value)/100.0);
     settings->camera_expo = ((double)value)/100.0;
     settings->set_value("camera_expo", ((double)value)/100.0);
 }
 
-void AgentXConfig::on_AutoExpo_Input_stateChanged(int arg1)
+void SettingConfig::on_AutoExpo_Input_stateChanged(int arg1)
 {
     settings->enable_auto_expo = arg1;
     set_camera_auto_expo(settings->enable_auto_expo);

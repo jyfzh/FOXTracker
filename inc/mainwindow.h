@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QSystemTrayIcon>
 #include <PoseDataSender.h>
-#include "agentxconfig.h"
+#include "settingconfig.h"
 #include "poseremapper.h"
 #include "uglobalhotkeys.h"
 

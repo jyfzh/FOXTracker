@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AgentXConfig</class>
- <widget class="QWidget" name="AgentXConfig">
+ <class>SettingConfig</class>
+ <widget class="QWidget" name="SettingConfig">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -409,7 +409,7 @@ color: #2e5669;</string>
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>AgentXConfig</receiver>
+   <receiver>SettingConfig</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -425,7 +425,7 @@ color: #2e5669;</string>
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>AgentXConfig</receiver>
+   <receiver>SettingConfig</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
