@@ -11,7 +11,7 @@ namespace Ui {
 class AgentXConfig;
 }
 
-class AgentXConfig : public QDialog
+class AgentXConfig : public QWidget
 {
     Q_OBJECT
 

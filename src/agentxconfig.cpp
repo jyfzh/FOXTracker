@@ -5,7 +5,7 @@
 #include <QMessageBox>
 
 AgentXConfig::AgentXConfig(QWidget *parent) :
-    QDialog(parent),
+    QWidget(parent),
     ui(new Ui::AgentXConfig)
 {
     ui->setupUi(this);

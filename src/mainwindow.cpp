@@ -205,21 +205,6 @@ void MainWindow::on_actioncenter_triggered()
 }
 
 
-void MainWindow::on_actionconfig_triggered()
-{
-    if(config_menu == nullptr) {
-        config_menu = new AgentXConfig(this);
-
-        connect(config_menu, &AgentXConfig::reset_camera, &hd, &HeadPoseDetector::reset);
-        connect(config_menu, &AgentXConfig::recenter_hotkey_pressed, this, &MainWindow::on_center_keyboard_event);
-        connect(config_menu, &AgentXConfig::set_camera_gain, &hd, &HeadPoseDetector::set_gain);
-        connect(config_menu, &AgentXConfig::set_camera_expo, &hd, &HeadPoseDetector::set_expo);
-        connect(config_menu, &AgentXConfig::set_camera_auto_expo, &hd, &HeadPoseDetector::set_auto_expo);
-    }
-    config_menu->show();
-}
-
-
 void MainWindow::on_actionalways_on_top_toggled(bool arg1)
 {
     Qt::WindowFlags flags = this->windowFlags();
@@ -244,3 +229,9 @@ void MainWindow::on_actiontoggle_preview_triggered()
         this->start_camera_preview();
     }
 }
+
+void MainWindow::on_buttonBox_accepted()
+{
+
+}
+

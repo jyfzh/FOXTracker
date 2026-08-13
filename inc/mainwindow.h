@@ -49,11 +49,11 @@ private slots:
 
     void on_actioncenter_triggered();
 
-    void on_actionconfig_triggered();
-
     void on_actionalways_on_top_toggled(bool arg1);
 
     void on_actiontoggle_preview_triggered();
+
+    void on_buttonBox_accepted();
 
 private:
     QTimer* Timer = nullptr;
@@ -63,7 +63,6 @@ private:
     Ui::MainWindow *ui;
     void create_tray_icon();
 
-    AgentXConfig * config_menu = nullptr;
     QSystemTrayIcon* m_tray_icon = nullptr;
 
     UGlobalHotkeys *hotkeyManager;
