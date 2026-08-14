@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("FOXTracker");
 
+    statusBar()->addWidget(new QLabel("Face Tracking ..."));
+
     status_fps_label = new QLabel("FPS: 0", this);
     status_fps_label->setFixedWidth(120);
     statusBar()->addPermanentWidget(status_fps_label);
@@ -124,7 +126,6 @@ void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason) {
 }
 
 void MainWindow::on_pose6d_data(double t, Pose6DoF _pose) {
-    ui->time_disp->display(t);
     ui->x_disp->display(_pose.second.x() * 100);
     ui->y_disp->display(_pose.second.y() * 100);
     ui->z_disp->display(_pose.second.z() * 100);
@@ -142,7 +143,6 @@ void MainWindow::on_pose6d_data_raw(double t, Pose6DoF _pose) {
         fps = 1/(t - t_last)*0.05 + fps*0.95;
     }
     t_last = t;
-    ui->fps_disp->display(fps);
     status_fps_label->setText("FPS: " + QString::number(fps));
 }
 

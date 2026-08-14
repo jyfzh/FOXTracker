@@ -8,6 +8,22 @@ FilterConfig::FilterConfig(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // 修复“字体显示不完整”：全局样式把字号强制成 14px，QLabel 默认
+    // 的水平 sizePolicy 为 Preferred，在布局空间紧张时会被压窄到比文字
+    // 宽度还小，导致文字被裁切。改为 Minimum 后标签列始终保持内容宽度，
+    // 滑块列（第 1 列）吸收多余空间。
+    for (QLabel* lbl : findChildren<QLabel*>()) {
+        QSizePolicy sp = lbl->sizePolicy();
+        sp.setHorizontalPolicy(QSizePolicy::Minimum);
+        lbl->setSizePolicy(sp);
+    }
+    // 各分组内的滑块在第 1 列，让它伸展而不是挤压标签列
+    for (QGridLayout* gl : {ui->gridLayout_2, ui->gridLayout_3, ui->gridLayout_4,
+                            ui->gridLayout_5, ui->gridLayout_6, ui->gridLayout_7,
+                            ui->gridLayout_8, ui->gridLayout_9}) {
+        if (gl) gl->setColumnStretch(1, 1);
+    }
+
     if(settings->use_accela) {
         ui->Accela_Check->setCheckState(Qt::Checked);
     } else {

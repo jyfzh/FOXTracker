@@ -10,7 +10,6 @@ SettingConfig::SettingConfig(QWidget *parent) :
     ui(new Ui::SettingConfig)
 {
     ui->setupUi(this);
-    this->setWindowTitle("Config");
     qDebug() << "Start AgentX Config page";
     QStringList joystickNames = QJoysticks::getInstance()->deviceNames();
     qDebug() << "Joysticks" << joystickNames;
@@ -73,7 +72,7 @@ void SettingConfig::on_SendUDP_Check_stateChanged(int arg1)
 
 void SettingConfig::on_buttonBox_accepted()
 {
-    if(settings->udp_host != ui->IP_Input->text().toUtf8().constData() || settings->port!=ui->Port_Input->value()) {
+    if(settings->udp_host != ui->IP_Input->text().toUtf8().constData() || settings->port != ui->Port_Input->value()) {
         settings->udp_host = ui->IP_Input->text().toUtf8().constData();
         settings->set_value<std::string>("udp_host", settings->udp_host);
         settings->port = ui->Port_Input->value();
@@ -124,7 +123,7 @@ void SettingConfig::on_Bind_HotKey_clicked(int key) {
     qDebug() << "MBox recturn" << ret;
 }
 
-void SettingConfig::buttonEvent (const QJoystickButtonEvent& event) {
+void SettingConfig::buttonEvent(const QJoystickButtonEvent& event) {
     std::string joyname = event.joystick->name.toUtf8().constData();
     int btn_id =  event.button;
     if(event.pressed && wait_for_bind >= 0) {
