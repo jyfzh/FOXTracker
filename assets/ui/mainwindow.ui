@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>875</width>
-    <height>620</height>
+    <width>904</width>
+    <height>675</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -62,6 +62,12 @@
     </property>
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="styleSheet">
        <string notr="true">padding:12px;
 color:#aaa;</string>
@@ -91,8 +97,125 @@ color:#aaa;</string>
        <attribute name="title">
         <string>Preview</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>position</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+          <layout class="QFormLayout" name="formLayout_2">
+           <property name="horizontalSpacing">
+            <number>6</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>X</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLCDNumber" name="x_disp">
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Y</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLCDNumber" name="y_disp">
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Z</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLCDNumber" name="z_disp">
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="1" rowspan="2">
          <widget class="QLabel" name="preview_camera">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -131,240 +254,122 @@ border-radius: 10px;</string>
           </property>
          </widget>
         </item>
-        <item>
-         <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0">
-          <property name="spacing">
-           <number>6</number>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string>pose</string>
           </property>
-          <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_4">
-            <property name="title">
-             <string>pose</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_4">
-             <property name="leftMargin">
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+          <layout class="QFormLayout" name="formLayout">
+           <property name="horizontalSpacing">
+            <number>6</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Yaw</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLCDNumber" name="yaw_disp">
+             <property name="digitCount">
               <number>6</number>
              </property>
-             <property name="topMargin">
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Pitch</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLCDNumber" name="pitch_disp">
+             <property name="digitCount">
               <number>6</number>
              </property>
-             <property name="rightMargin">
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_3">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Roll</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLCDNumber" name="roll_disp">
+             <property name="digitCount">
               <number>6</number>
              </property>
-             <property name="bottomMargin">
-              <number>6</number>
-             </property>
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item row="1" column="2">
-              <widget class="QLCDNumber" name="yaw_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="2">
-              <widget class="QLCDNumber" name="roll_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QLabel" name="label_3">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>Roll</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="label_4">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>Pitch</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QLCDNumber" name="pitch_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="label_2">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>Yaw</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QGroupBox" name="groupBox_2">
-            <property name="title">
-             <string>position</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_5">
-             <property name="leftMargin">
-              <number>6</number>
-             </property>
-             <property name="topMargin">
-              <number>6</number>
-             </property>
-             <property name="rightMargin">
-              <number>6</number>
-             </property>
-             <property name="bottomMargin">
-              <number>6</number>
-             </property>
-             <property name="spacing">
-              <number>6</number>
-             </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_5">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>X</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLCDNumber" name="x_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>Y</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLCDNumber" name="y_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_7">
-               <property name="font">
-                <font>
-                 <family>Source Code Variable</family>
-                 <pointsize>15</pointsize>
-                 <italic>false</italic>
-                 <bold>false</bold>
-                 <strikeout>false</strikeout>
-                </font>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">color: #8fbed4;</string>
-               </property>
-               <property name="text">
-                <string>Z</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QLCDNumber" name="z_disp">
-               <property name="digitCount">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-         </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -393,7 +398,7 @@ border-radius: 10px;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>875</width>
+     <width>904</width>
      <height>22</height>
     </rect>
    </property>
