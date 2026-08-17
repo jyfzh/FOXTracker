@@ -4,6 +4,14 @@
         <file>SourceCodeVariable-Italic.ttf</file>
         <file>SourceCodeVariable-Roman.ttf</file>
         <file>dcs.JPG</file>
+    <file>qml/main.qml</file>
+    <file>qml/LcdDisplay.ui.qml</file>
+    <file>qml/SliderRow.qml</file>
+    <file>qml/LogSlider.qml</file>
+    <file>qml/EkfPageForm.ui.qml</file>
+    <file>qml/EkfPage.qml</file>
+    <file>qml/FilterPage.qml</file>
+    <file>qml/SettingPage.qml</file>
     </qresource>
     <qresource prefix="/freetrack"/>
 </RCC>

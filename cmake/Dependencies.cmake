@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui Network Widgets Charts)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Network Widgets Charts)
 find_package(OpenCV REQUIRED COMPONENTS
     core imgproc imgcodecs video videoio highgui calib3d features2d dnn tracking aruco
 )

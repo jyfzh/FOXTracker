@@ -6,7 +6,6 @@
 #include <opencv2/aruco.hpp>
 #include <QTimer>
 #include <QMessageBox>
-#include <mainwindow.h>
 #include <stereo_bundle_adjustment.h>
 using namespace cv;
 using namespace std;

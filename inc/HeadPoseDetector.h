@@ -23,8 +23,6 @@
 #include <PS3EYEDriver/src/ps3eye.h>
 #include <PS3EYEDriver/src/ps3eye_capi.h>
 
-class MainWindow;
-
 class HeadPoseDetector;
 
 struct HeadPoseDetectionResult {

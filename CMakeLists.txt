@@ -35,41 +35,39 @@ include("${PROJECT_SOURCE_DIR}/cmake/Dependencies.cmake")
 add_subdirectory(lib)
 
 set(FOXTRACKER_SOURCES
-    src/settingconfig.cpp
-    src/ekfconfig.cpp
     src/FaceDetectors.cpp
-    src/filterconfig.cpp
     src/FlightAgxSettings.cpp
     src/FSANet.cpp
     src/HeadPoseDetector.cpp
     src/KalmanFilter.cpp
     src/main.cpp
-    src/mainwindow.cpp
+    src/foxcontroller.cpp
+    src/previewitem.cpp
     src/PoseDataSender.cpp
     src/poseremapper.cpp
     src/stereo_bundle_adjustment.cpp
-    src/videocontainer.cpp
 )
 
 set(FOXTRACKER_FORMS
-    "${PROJECT_SOURCE_DIR}/assets/ui/settingconfig.ui"
-    "${PROJECT_SOURCE_DIR}/assets/ui/ekfconfig.ui"
-    "${PROJECT_SOURCE_DIR}/assets/ui/filterconfig.ui"
-    "${PROJECT_SOURCE_DIR}/assets/ui/mainwindow.ui"
-    "${PROJECT_SOURCE_DIR}/assets/ui/videocontainer.ui"
+    assets/qml/EkfPage.qml
+    assets/qml/EkfPageForm.ui.qml
+    assets/qml/FilterPage.qml
+    assets/qml/LcdDisplay.qml
+    assets/qml/LcdDisplay.ui.qml
+    assets/qml/LogSlider.qml
+    assets/qml/SettingPage.qml
+    assets/qml/SliderRow.qml
+    assets/qml/main.qml
 )
 
 add_executable(FOXTracker WIN32
     ${FOXTRACKER_SOURCES}
     ${FOXTRACKER_FORMS}
     "${PROJECT_SOURCE_DIR}/assets/main.qrc"
-    "${PROJECT_SOURCE_DIR}/inc/settingconfig.h"
-    "${PROJECT_SOURCE_DIR}/inc/ekfconfig.h"
-    "${PROJECT_SOURCE_DIR}/inc/filterconfig.h"
     "${PROJECT_SOURCE_DIR}/inc/HeadPoseDetector.h"
-    "${PROJECT_SOURCE_DIR}/inc/mainwindow.h"
+    "${PROJECT_SOURCE_DIR}/inc/foxcontroller.h"
+    "${PROJECT_SOURCE_DIR}/inc/previewitem.h"
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"
-    "${PROJECT_SOURCE_DIR}/inc/videocontainer.h"
 )
 
 set_target_properties(FOXTracker PROPERTIES
@@ -91,6 +89,8 @@ target_include_directories(FOXTracker PRIVATE
 target_link_libraries(FOXTracker PRIVATE
     Qt5::Core
     Qt5::Gui
+    Qt5::Qml
+    Qt5::Quick
     Qt5::Network
     Qt5::Widgets
     Qt5::Charts
@@ -133,6 +133,17 @@ if(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
             "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/plugins"
             "$<TARGET_FILE_DIR:FOXTracker>/plugins"
         COMMENT "Deploying Qt plugins"
+        VERBATIM
+    )
+    # The QML engine needs the QtQuick / QtQuick.Controls QML modules next to
+    # the executable now that the UI is implemented in QML.
+    add_custom_command(TARGET FOXTracker POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf
+            "$<TARGET_FILE_DIR:FOXTracker>/qml"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/qml"
+            "$<TARGET_FILE_DIR:FOXTracker>/qml"
+        COMMENT "Deploying Qt QML modules"
         VERBATIM
     )
 endif()
