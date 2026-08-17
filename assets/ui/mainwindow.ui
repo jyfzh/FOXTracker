@@ -98,162 +98,6 @@ color:#aaa;</string>
         <string>Preview</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0">
-         <widget class="QGroupBox" name="groupBox_2">
-          <property name="title">
-           <string>position</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-          <layout class="QFormLayout" name="formLayout_2">
-           <property name="horizontalSpacing">
-            <number>6</number>
-           </property>
-           <property name="verticalSpacing">
-            <number>6</number>
-           </property>
-           <property name="leftMargin">
-            <number>6</number>
-           </property>
-           <property name="topMargin">
-            <number>6</number>
-           </property>
-           <property name="rightMargin">
-            <number>6</number>
-           </property>
-           <property name="bottomMargin">
-            <number>6</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="font">
-              <font>
-               <family>Source Code Variable</family>
-               <pointsize>15</pointsize>
-               <italic>false</italic>
-               <bold>false</bold>
-               <strikeout>false</strikeout>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="text">
-              <string>X</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLCDNumber" name="x_disp">
-             <property name="digitCount">
-              <number>6</number>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_6">
-             <property name="font">
-              <font>
-               <family>Source Code Variable</family>
-               <pointsize>15</pointsize>
-               <italic>false</italic>
-               <bold>false</bold>
-               <strikeout>false</strikeout>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="text">
-              <string>Y</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLCDNumber" name="y_disp">
-             <property name="digitCount">
-              <number>6</number>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_7">
-             <property name="font">
-              <font>
-               <family>Source Code Variable</family>
-               <pointsize>15</pointsize>
-               <italic>false</italic>
-               <bold>false</bold>
-               <strikeout>false</strikeout>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="text">
-              <string>Z</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLCDNumber" name="z_disp">
-             <property name="digitCount">
-              <number>6</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="0" column="1" rowspan="2">
-         <widget class="QLabel" name="preview_camera">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>320</width>
-            <height>240</height>
-           </size>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">border: 2px solid rgb(132, 132, 132);
-color: rgb(132, 132, 132);
-border-radius: 10px;</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Shape::Box</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Sunken</enum>
-          </property>
-          <property name="lineWidth">
-           <number>2</number>
-          </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt;&quot;&gt;no image&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="scaledContents">
-           <bool>true</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QGroupBox" name="groupBox_4">
           <property name="title">
@@ -305,6 +149,13 @@ border-radius: 10px;</string>
            </item>
            <item row="0" column="1">
             <widget class="QLCDNumber" name="yaw_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
              <property name="digitCount">
               <number>6</number>
              </property>
@@ -334,6 +185,13 @@ border-radius: 10px;</string>
            </item>
            <item row="1" column="1">
             <widget class="QLCDNumber" name="pitch_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
              <property name="digitCount">
               <number>6</number>
              </property>
@@ -363,12 +221,170 @@ border-radius: 10px;</string>
            </item>
            <item row="2" column="1">
             <widget class="QLCDNumber" name="roll_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
              <property name="digitCount">
               <number>6</number>
              </property>
             </widget>
            </item>
           </layout>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>position</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+          <layout class="QFormLayout" name="formLayout_2">
+           <property name="horizontalSpacing">
+            <number>6</number>
+           </property>
+           <property name="verticalSpacing">
+            <number>6</number>
+           </property>
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>X</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLCDNumber" name="x_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_6">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Y</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLCDNumber" name="y_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="font">
+              <font>
+               <family>Source Code Variable</family>
+               <pointsize>15</pointsize>
+               <italic>false</italic>
+               <bold>false</bold>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">color: rgb(0, 0, 0);</string>
+             </property>
+             <property name="text">
+              <string>Z</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLCDNumber" name="z_disp">
+             <property name="styleSheet">
+              <string notr="true">background-color: #202020;
+color: #00ff00;
+border: 2px solid #555555;
+border-radius: 10px;
+padding: 10px;</string>
+             </property>
+             <property name="digitCount">
+              <number>6</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="0" column="1" rowspan="2">
+         <widget class="VideoContainer" name="preview_widget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">border-color: rgb(116, 116, 116);</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -495,7 +511,7 @@ border-radius: 10px;</string>
   <customwidget>
    <class>EKFConfig</class>
    <extends>QWidget</extends>
-   <header location="global">ekfconfig.h</header>
+   <header>ekfconfig.h</header>
   </customwidget>
   <customwidget>
    <class>FilterConfig</class>
@@ -506,6 +522,12 @@ border-radius: 10px;</string>
    <class>SettingConfig</class>
    <extends>QWidget</extends>
    <header>settingconfig.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>VideoContainer</class>
+   <extends>QWidget</extends>
+   <header location="global">videocontainer.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

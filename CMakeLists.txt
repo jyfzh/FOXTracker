@@ -48,7 +48,7 @@ set(FOXTRACKER_SOURCES
     src/PoseDataSender.cpp
     src/poseremapper.cpp
     src/stereo_bundle_adjustment.cpp
-    # src/config.cpp
+    src/videocontainer.cpp
 )
 
 set(FOXTRACKER_FORMS
@@ -56,6 +56,7 @@ set(FOXTRACKER_FORMS
     "${PROJECT_SOURCE_DIR}/assets/ui/ekfconfig.ui"
     "${PROJECT_SOURCE_DIR}/assets/ui/filterconfig.ui"
     "${PROJECT_SOURCE_DIR}/assets/ui/mainwindow.ui"
+    "${PROJECT_SOURCE_DIR}/assets/ui/videocontainer.ui"
 )
 
 add_executable(FOXTracker WIN32
@@ -68,6 +69,7 @@ add_executable(FOXTracker WIN32
     "${PROJECT_SOURCE_DIR}/inc/HeadPoseDetector.h"
     "${PROJECT_SOURCE_DIR}/inc/mainwindow.h"
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"
+    "${PROJECT_SOURCE_DIR}/inc/videocontainer.h"
 )
 
 set_target_properties(FOXTracker PROPERTIES

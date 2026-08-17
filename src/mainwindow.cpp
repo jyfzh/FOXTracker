@@ -155,7 +155,7 @@ void MainWindow::start_camera_preview() {
                 return;
             }
             QImage imdisplay((uchar*)img.data, img.cols, img.rows, img.step, QImage::Format_BGR888);
-            ui->preview_camera->setPixmap(QPixmap::fromImage(imdisplay));
+            ui->preview_widget->set_preview_image(imdisplay);
         });
     }
     settings->enable_preview = true;
