@@ -48,30 +48,13 @@ set(FOXTRACKER_SOURCES
     src/stereo_bundle_adjustment.cpp
 )
 
-set(FOXTRACKER_FORMS
-    assets/qml/EkfPage.qml
-    assets/qml/EkfPageForm.ui.qml
-    assets/qml/FilterPage.qml
-    assets/qml/LcdDisplay.qml
-    assets/qml/LcdDisplay.ui.qml
-    assets/qml/LogSlider.qml
-    assets/qml/SettingPage.qml
-    assets/qml/SliderRow.qml
-    assets/qml/main.qml
-)
-
 add_executable(FOXTracker WIN32
     ${FOXTRACKER_SOURCES}
-    ${FOXTRACKER_FORMS}
     "${PROJECT_SOURCE_DIR}/assets/main.qrc"
     "${PROJECT_SOURCE_DIR}/inc/HeadPoseDetector.h"
     "${PROJECT_SOURCE_DIR}/inc/foxcontroller.h"
     "${PROJECT_SOURCE_DIR}/inc/previewitem.h"
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"
-)
-
-set_target_properties(FOXTracker PROPERTIES
-    AUTOUIC_SEARCH_PATHS "${PROJECT_SOURCE_DIR};${PROJECT_SOURCE_DIR}/assets/ui"
 )
 
 # SDL's SDL_main.h (pulled in transitively via QJoysticks) redefines `main`
