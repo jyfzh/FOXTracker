@@ -24,9 +24,6 @@ int main(int argc, char *argv[])
     // embedded into the QML scene via QWidget::createWindowContainer.
     QApplication a(argc, argv);
 
-    QFontDatabase::addApplicationFont( QCoreApplication::applicationDirPath() + "/assets/SourceCodeVariable-Italic.ttf");
-    QFontDatabase::addApplicationFont( QCoreApplication::applicationDirPath() + "/assets/SourceCodeVariable-Roman.ttf");
-
     qmlRegisterType<PreviewItem>("FOXTracker", 1, 0, "PreviewView");
 
     settings = new FlightAgxSettings;
@@ -34,7 +31,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     FoxController controller;
     engine.rootContext()->setContextProperty("fox", &controller);
-    engine.load(QUrl("qrc:/qml/main.qml"));
+    engine.load(QUrl("qrc:/qml/MainWindow.qml"));
     if (engine.rootObjects().isEmpty())
         return -1;
 

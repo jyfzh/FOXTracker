@@ -10,7 +10,7 @@ PreviewItem::PreviewItem(QQuickItem *parent)
 void PreviewItem::paint(QPainter *painter)
 {
     QRectF rect = boundingRect();
-    painter->fillRect(rect, Qt::black);
+    painter->fillRect(rect, Qt::white);
     if (m_controller == nullptr) {
         return;
     }

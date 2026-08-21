@@ -5,7 +5,7 @@ import QtQuick.Controls 2.12
 Rectangle {
     property real value: 0
 
-    color: "#202020"
+    color: "#f2f2f2"
     border.color: "#555555"
     border.width: 2
     radius: 10
@@ -15,7 +15,7 @@ Rectangle {
     Text {
         anchors.centerIn: parent
         text: parent.value.toFixed(2)
-        color: "#00ff00"
+        color: "#929292"
         font.family: "Source Code Variable"
         font.pixelSize: 18
     }

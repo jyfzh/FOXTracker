@@ -52,6 +52,7 @@ add_executable(FOXTracker WIN32
     ${FOXTRACKER_SOURCES}
     "${PROJECT_SOURCE_DIR}/assets/main.qrc"
     "${PROJECT_SOURCE_DIR}/inc/HeadPoseDetector.h"
+    "${PROJECT_SOURCE_DIR}/inc/PoseDataSender.h"
     "${PROJECT_SOURCE_DIR}/inc/foxcontroller.h"
     "${PROJECT_SOURCE_DIR}/inc/previewitem.h"
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"

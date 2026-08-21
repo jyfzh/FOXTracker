@@ -21,15 +21,15 @@ LandmarkDetector::LandmarkDetector():
 
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
-    //Use enable all speed up max model from 30ms to 19ms.
+    // Use enable all speed up max model from 30ms to 19ms.
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL );
-//    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED );
+    // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED );
 
     if (settings->enable_gpu) {
         qDebug("Will use TensorRT to accelerate computing.....");
-//        OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0);
-        //Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0));
-        //Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0));
+        // OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0);
+        // Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0));
+        // Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0));
     }
 
     for (size_t i = 0; i < settings->emilianavt_models.size(); i ++) {

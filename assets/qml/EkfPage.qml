@@ -1,8 +1,6 @@
 import QtQuick 2.12
 import QtQml 2.12
-import FOXTracker 1.0
 
-// Logic for the EKF page. The pure UI declaration is in EkfPageForm.ui.qml.
 EkfPageForm {
     id: page
 

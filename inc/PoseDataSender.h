@@ -3,6 +3,7 @@
 #include "freetrack/ftnoir_protocol_ft.h"
 #include <QtNetwork>
 #include <QDebug>
+
 class PoseDataSender: public QObject {
     QUdpSocket * udpsock = nullptr;
     freetrack * ft = nullptr;

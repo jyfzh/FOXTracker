@@ -1,17 +1,20 @@
 <RCC>
     <qresource prefix="/">
-    <file>icons/icon.png</file>
-    <file>SourceCodeVariable-Italic.ttf</file>
-    <file>SourceCodeVariable-Roman.ttf</file>
-    <file>dcs.JPG</file>
-    <file>qml/main.qml</file>
-    <file>qml/LcdDisplay.ui.qml</file>
-    <file>qml/SliderRow.qml</file>
-    <file>qml/LogSlider.qml</file>
-    <file>qml/EkfPageForm.ui.qml</file>
-    <file>qml/EkfPage.qml</file>
-    <file>qml/FilterPage.qml</file>
-    <file>qml/SettingPage.qml</file>
+        <file>icons/icon.png</file>
+        <file>dcs.JPG</file>
+        <file>qml/MainWindow.qml</file>
+        <file>qml/MainWindowForm.ui.qml</file>
+        <file>qml/LcdDisplay.ui.qml</file>
+        <file>qml/SliderRow.qml</file>
+        <file>qml/LogSlider.qml</file>
+        <file>qml/EkfPageForm.ui.qml</file>
+        <file>qml/EkfPage.qml</file>
+        <file>qml/FilterPage.qml</file>
+        <file>qml/FilterPageForm.ui.qml</file>
+        <file>qml/SettingPage.qml</file>
+        <file>qml/SettingPageForm.ui.qml</file>
+        <file>qml/PreviewPage.qml</file>
+        <file>qml/PreviewPageForm.ui.qml</file>
     </qresource>
     <qresource prefix="/freetrack"/>
 </RCC>
