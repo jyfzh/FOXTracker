@@ -20,15 +20,14 @@ ApplicationWindow {
         background: Rectangle { color: "#cfd1d1" }
         RowLayout {
             anchors.fill: parent
-            Label { text: "Face Tracking ..." }
+            Item { width: 12 }
+            Label { text: "Face Tracking: " + (fox.running ? "ON" : "OFF") }
             Item { Layout.fillWidth: true }
-            Label {
-                text: "FPS: " + fox.fps.toFixed(1)
-            }
+            Label { text: "FPS: " + fox.fps.toFixed(1) }
             Label {
                 text: "Time: " + fox.timeSec.toFixed(2)
-                Layout.preferredWidth: 120
             }
+            Item { width: 12 }
         }
     }
 
