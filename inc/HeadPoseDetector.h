@@ -126,6 +126,8 @@ class HeadPoseDetector: public QObject {
     bool last_succ = false;
 
 public:
+    ~HeadPoseDetector();
+
     HeadPoseDetector(): last_roi(0, 0, 0, 0) {
         cv::setNumThreads(1);
         is_running = false;

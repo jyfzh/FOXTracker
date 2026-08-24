@@ -188,6 +188,24 @@ void HeadPoseDetector::run_detect_thread() {
 }
 
 
+HeadPoseDetector::~HeadPoseDetector() {
+    // Stop detection synchronously inside the worker thread (mainThread) so
+    // timers/camera are released there, then stop the event loop and join the
+    // thread. Without this, the member QThread `mainThread` would be destroyed
+    // while still running, which triggers qFatal
+    // ("QThread: Destroyed while thread is still running") -> 0xc0000409 on exit.
+    if (mainThread.isRunning()) {
+        if (QThread::currentThread() == &mainThread) {
+            stop_slot();
+        } else {
+            QMetaObject::invokeMethod(this, "stop_slot", Qt::BlockingQueuedConnection);
+        }
+        mainThread.quit();
+        mainThread.wait();
+    }
+    ps3eye_uninit();
+}
+
 void HeadPoseDetector::start_slot() {
     t0 = QDateTime::currentMSecsSinceEpoch()/1000.0;
     if (is_running) {

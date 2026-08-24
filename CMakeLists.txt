@@ -45,6 +45,7 @@ set(FOXTRACKER_SOURCES
     src/previewitem.cpp
     src/PoseDataSender.cpp
     src/poseremapper.cpp
+    src/LogManager.cpp
     src/stereo_bundle_adjustment.cpp
 )
 
@@ -56,6 +57,9 @@ add_executable(FOXTracker WIN32
     "${PROJECT_SOURCE_DIR}/inc/foxcontroller.h"
     "${PROJECT_SOURCE_DIR}/inc/previewitem.h"
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"
+    "${PROJECT_SOURCE_DIR}/inc/LogManager.h"
+    inc/LogManager.h
+    src/LogManager.cpp
 )
 
 # SDL's SDL_main.h (pulled in transitively via QJoysticks) redefines `main`
@@ -101,19 +105,54 @@ install(TARGETS FOXTracker
 # lookup in FlightAgxSettings. config.yaml lives inside assets/, so the
 # whole directory copy covers it.
 add_custom_command(TARGET FOXTracker POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different
         "${PROJECT_SOURCE_DIR}/assets"
         "$<TARGET_FILE_DIR:FOXTracker>/assets"
     COMMENT "Copying runtime assets"
     VERBATIM
 )
 
+# qt.conf next to the executable makes the deployment self-contained:
+# plugins/ and qml/ are resolved relative to the exe directory instead of
+# vcpkg's compiled-in absolute prefix (which only exists on this machine).
+add_custom_command(TARGET FOXTracker POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${PROJECT_SOURCE_DIR}/cmake/deploy/qt.conf"
+        "$<TARGET_FILE_DIR:FOXTracker>/qt.conf"
+    COMMENT "Deploying qt.conf"
+    VERBATIM
+)
+
+# QML modules deployed under qml/ are plugins whose backing Qt DLLs are NOT
+# linked into FOXTracker.exe directly (e.g. import QtCharts loads
+# qml/QtCharts/qtchartsqml2.dll, which needs Qt5Charts.dll). They resolve via
+# PATH inside Qt Creator, but a double-clicked exe would not find them.
+if(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
+    set(FOXTRACKER_QML_RUNTIME_DLLS
+        Qt5Charts        # qml/QtCharts
+        Qt5Multimedia    # qml/QtMultimedia
+        Qt5MultimediaQuick
+        Qt5Test          # qml/QtTest
+        Qt5WebSockets    # qml/QtWebSockets
+    )
+    foreach(_dll ${FOXTRACKER_QML_RUNTIME_DLLS})
+        add_custom_command(TARGET FOXTracker POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin/${_dll}$<$<CONFIG:Debug>:d>.dll"
+                "$<TARGET_FILE_DIR:FOXTracker>/"
+            COMMENT "Deploying ${_dll}.dll"
+            VERBATIM
+        )
+    endforeach()
+endif()
+
 # Qt's plugin tree must match the selected configuration, especially for Debug.
 if(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
+    # copy_directory_if_different skips files whose content is unchanged, so
+    # an incremental build does not try to rewrite plugin DLLs that a still-
+    # running FOXTracker.exe keeps locked.
     add_custom_command(TARGET FOXTracker POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E rm -rf
-            "$<TARGET_FILE_DIR:FOXTracker>/plugins"
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different
             "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/plugins"
             "$<TARGET_FILE_DIR:FOXTracker>/plugins"
         COMMENT "Deploying Qt plugins"
@@ -122,9 +161,7 @@ if(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
     # The QML engine needs the QtQuick / QtQuick.Controls QML modules next to
     # the executable now that the UI is implemented in QML.
     add_custom_command(TARGET FOXTracker POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E rm -rf
-            "$<TARGET_FILE_DIR:FOXTracker>/qml"
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different
             "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/qml"
             "$<TARGET_FILE_DIR:FOXTracker>/qml"
         COMMENT "Deploying Qt QML modules"
