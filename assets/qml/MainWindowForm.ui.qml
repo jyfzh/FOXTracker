@@ -11,16 +11,6 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        Rectangle {
-            id: status
-            z: 100
-            Layout.fillWidth: true
-            height: 20
-            Text {
-                text: "current status"
-            }
-        }
-
         TabBar {
             id: tabBar
             Layout.fillWidth: true
@@ -43,13 +33,9 @@ Item {
             Layout.fillHeight: true
             currentIndex: tabBar.currentIndex
 
-            // Preview page
             PreviewPage {}
-            // EKF config page
             EkfPage {}
-            // Filter config page
             FilterPage {}
-            // Setting config page
             SettingPage {}
         }
     }

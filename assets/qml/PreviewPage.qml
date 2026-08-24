@@ -84,4 +84,36 @@ PreviewPageForm {
             parseAndLog(msg)
         }
     }
+
+    Connections {
+        target: form.startButton
+
+        function onClicked() {
+            fox.start()
+        }
+    }
+
+    Connections {
+        target: form.stopButton
+
+        function onClicked() {
+            fox.stop()
+        }
+    }
+
+    Connections {
+        target: form.centerButton
+
+        function onClicked() {
+            fox.center()
+        }
+    }
+
+    Connections {
+        target: form.previewButton
+
+        function onClicked() {
+            fox.togglePreview()
+        }
+    }
 }

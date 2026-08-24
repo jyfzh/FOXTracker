@@ -7,8 +7,6 @@ Page {
     id: form
     padding: 8
 
-    // Properties to receive data from the logic layer (PreviewPage.qml)
-    // .ui.qml files cannot directly access context properties like 'fox'
     property real posX: 0
     property real posY: 0
     property real posZ: 0
@@ -17,10 +15,12 @@ Page {
     property real poseRoll: 0
     property var previewController: null
 
-    // Log display — expose the controls to the logic layer (PreviewPage.qml),
-    // since .ui.qml files cannot access context properties or define JS logic.
-    property alias logView: logArea
-    property alias logFlick: logFlick
+    property alias logView: log_area
+    property alias logFlick: log_flick
+    property alias startButton: start_button
+    property alias stopButton: stop_button
+    property alias previewButton: preview_button
+    property alias centerButton: center_button
 
     ColumnLayout {
         anchors.fill: parent
@@ -44,38 +44,29 @@ Page {
                         columnSpacing: 6
                         Label {
                             text: "X"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: posX
                         }
                         Label {
                             text: "Y"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: posY
                         }
                         Label {
                             text: "Z"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: posZ
                         }
                     }
+                }
+                Item {
+                    Layout.fillHeight: true
                 }
                 GroupBox {
                     title: "pose"
@@ -88,36 +79,54 @@ Page {
                         columnSpacing: 6
                         Label {
                             text: "Yaw"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: poseYaw
                         }
                         Label {
                             text: "Pitch"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: posePitch
                         }
                         Label {
                             text: "Roll"
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
                             horizontalAlignment: Text.AlignHCenter
                         }
                         LcdDisplay {
-                            anchors.right: parent.right
-                            anchors.rightMargin: 10
                             value: poseRoll
+                        }
+                    }
+                }
+                Item {
+                    Layout.fillHeight: true
+                }
+                GroupBox {
+                    title: ""
+                    Layout.preferredWidth: 240
+                    Layout.alignment: Qt.AlignTop
+                    GridLayout {
+                        anchors.fill: parent
+                        columns: 2
+                        rowSpacing: 6
+                        columnSpacing: 6
+                        Button {
+                            id: start_button
+                            text: "Start"
+                        }
+                        Button  {
+                            id: stop_button
+                            text: "Stop"
+                        }
+                        Button  {
+                            id: preview_button
+                            text: "Preview"
+                        }
+                        Button  {
+                            id: center_button
+                            text: "Center"
                         }
                     }
                 }
@@ -135,20 +144,20 @@ Page {
                 spacing: 6
 
                 Flickable {
-                    id: logFlick
+                    id: log_flick
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    contentWidth: logArea.implicitWidth
-                    contentHeight: logArea.implicitHeight
+                    contentWidth: log_area.implicitWidth
+                    contentHeight: log_area.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
                     ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
                     ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
 
                     TextArea {
-                        id: logArea
-                        width: logFlick.width
-                        height: Math.max(implicitHeight, logFlick.height)
+                        id: log_area
+                        width: log_flick.width
+                        height: Math.max(implicitHeight, log_flick.height)
                         readOnly: true
                         textFormat: Text.RichText
                         wrapMode: Text.Wrap
