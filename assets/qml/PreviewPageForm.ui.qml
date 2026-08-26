@@ -8,30 +8,14 @@ Page {
     id: form
     padding: 10
 
-    // Themed page background: overrides the style default (palette.window),
-    // which does not follow runtime palette changes reliably in Qt 5.
+    // Explicit themed page background (the themed window palette in
+    // MainWindow.qml already colors the style default; this is belt-and-braces).
     background: Rectangle {
         color: Theme.background
     }
 
-    // Explicit themed palette for all descendant controls: Qt 5 does not
-    // propagate runtime application-palette changes to already-created items
-    // (verified by experiment), so stock Fusion-styled children would keep
-    // their startup colors — e.g. black labels on a dark background. Binding
-    // the palette here propagates reactively down the control tree instead.
-    // Keep in sync with ThemeManager::makePalette().
-    palette.window: Theme.background
-    palette.windowText: Theme.text
-    palette.base: Theme.input
-    palette.alternateBase: Theme.panel
-    palette.text: Theme.text
-    palette.button: Theme.panel
-    palette.buttonText: Theme.text
-    palette.highlight: Theme.accent
-    palette.highlightedText: Theme.textOnAccent
-    palette.toolTipBase: Theme.panel
-    palette.toolTipText: Theme.text
-    palette.link: Theme.accent
+    // Palette comes from the themed ApplicationWindow (MainWindow.qml);
+    // items inherit it automatically.
 
     property real posX: 0
     property real posY: 0
@@ -94,7 +78,9 @@ Page {
                         spacing: 6
 
                         Rectangle {
-                            width: 7; height: 7; radius: 3.5
+                            width: 7
+                            height: 7
+                            radius: 3.5
                             color: form.running ? Theme.hudSuccess : Theme.hudDim
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -176,7 +162,11 @@ Page {
                         font.bold: true
                         font.letterSpacing: 1.5
                     }
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Theme.border
+                    }
 
                     GridLayout {
                         Layout.fillWidth: true
@@ -184,12 +174,33 @@ Page {
                         rowSpacing: 6
                         columnSpacing: 10
 
-                        Label { text: "X"; color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: posX; Layout.fillWidth: true }
-                        Label { text: "Y"; color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: posY; Layout.fillWidth: true }
-                        Label { text: "Z"; color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: posZ; Layout.fillWidth: true }
+                        Label {
+                            text: "X"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: posX
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            text: "Y"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: posY
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            text: "Z"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: posZ
+                            Layout.fillWidth: true
+                        }
                     }
                 }
 
@@ -204,7 +215,11 @@ Page {
                         font.bold: true
                         font.letterSpacing: 1.5
                     }
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Theme.border
+                    }
 
                     GridLayout {
                         Layout.fillWidth: true
@@ -212,16 +227,42 @@ Page {
                         rowSpacing: 6
                         columnSpacing: 10
 
-                        Label { text: "Yaw";   color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: poseYaw;   unit: "\u00B0"; Layout.fillWidth: true }
-                        Label { text: "Pitch"; color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: posePitch; unit: "\u00B0"; Layout.fillWidth: true }
-                        Label { text: "Roll";  color: Theme.textDim; font.pixelSize: 12 }
-                        LcdDisplay { value: poseRoll;  unit: "\u00B0"; Layout.fillWidth: true }
+                        Label {
+                            text: "Yaw"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: poseYaw
+                            unit: "\u00B0"
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            text: "Pitch"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: posePitch
+                            unit: "\u00B0"
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            text: "Roll"
+                            color: Theme.textDim
+                            font.pixelSize: 12
+                        }
+                        LcdDisplay {
+                            value: poseRoll
+                            unit: "\u00B0"
+                            Layout.fillWidth: true
+                        }
                     }
                 }
 
-                Item { Layout.fillHeight: true }
+                Item {
+                    Layout.fillHeight: true
+                }
 
                 // Primary action: Start / Stop.
                 Button {
@@ -233,10 +274,7 @@ Page {
 
                     background: Rectangle {
                         radius: 4
-                        color: !start_button.enabled ? Qt.darker(Theme.accent, 1.9)
-                               : start_button.pressed ? Qt.darker(Theme.accent, 1.2)
-                               : start_button.hovered ? Qt.lighter(Theme.accent, 1.1)
-                               : Theme.accent
+                        color: !start_button.enabled ? Qt.darker(Theme.accent, 1.9) : start_button.pressed ? Qt.darker(Theme.accent, 1.2) : start_button.hovered ? Qt.lighter(Theme.accent, 1.1) : Theme.accent
                     }
                     contentItem: Text {
                         text: "\u25B6  Start"
@@ -261,10 +299,7 @@ Page {
                     // otherwise it stays a quiet outlined button.
                     background: Rectangle {
                         radius: 4
-                        color: !stop_button.enabled ? "transparent"
-                               : stop_button.pressed ? Qt.darker(Theme.error, 1.25)
-                               : stop_button.hovered ? Qt.lighter(Theme.error, 1.15)
-                               : Theme.error
+                        color: !stop_button.enabled ? "transparent" : stop_button.pressed ? Qt.darker(Theme.error, 1.25) : stop_button.hovered ? Qt.lighter(Theme.error, 1.15) : Theme.error
                         border.width: 1
                         border.color: stop_button.enabled ? Theme.error : Theme.border
                     }
@@ -291,9 +326,7 @@ Page {
 
                         background: Rectangle {
                             radius: 4
-                            color: preview_button.pressed ? Qt.lighter(Theme.input, 1.15)
-                                   : preview_button.hovered ? Qt.lighter(Theme.input, 1.08)
-                                   : Theme.input
+                            color: preview_button.pressed ? Qt.lighter(Theme.input, 1.15) : preview_button.hovered ? Qt.lighter(Theme.input, 1.08) : Theme.input
                             border.width: 1
                             border.color: Theme.border
                         }
@@ -314,9 +347,7 @@ Page {
 
                         background: Rectangle {
                             radius: 4
-                            color: center_button.pressed ? Qt.lighter(Theme.input, 1.15)
-                                   : center_button.hovered ? Qt.lighter(Theme.input, 1.08)
-                                   : Theme.input
+                            color: center_button.pressed ? Qt.lighter(Theme.input, 1.15) : center_button.hovered ? Qt.lighter(Theme.input, 1.08) : Theme.input
                             border.width: 1
                             border.color: Theme.border
                         }
@@ -341,7 +372,12 @@ Page {
             border.width: 1
             border.color: Theme.border
 
-            Behavior on Layout.preferredHeight { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+            Behavior on Layout.preferredHeight {
+                NumberAnimation {
+                    duration: 120
+                    easing.type: Easing.OutQuad
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -360,7 +396,9 @@ Page {
                         font.bold: true
                         font.letterSpacing: 1.5
                     }
-                    Item { Layout.fillWidth: true }
+                    Item {
+                        Layout.fillWidth: true
+                    }
 
                     Button {
                         id: clear_log_button
@@ -407,8 +445,12 @@ Page {
                     contentHeight: log_area.implicitHeight
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
-                    ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
-                    ScrollBar.horizontal: ScrollBar { policy: ScrollBar.AsNeeded }
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+                    ScrollBar.horizontal: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
 
                     TextArea {
                         id: log_area

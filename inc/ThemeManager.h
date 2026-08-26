@@ -16,7 +16,8 @@ class QWindow;
 //   singleton; assets/qml/Theme.qml maps it onto concrete colors.
 // - The chosen mode is persisted in config.yaml as "ui_theme" via
 //   FlightAgxSettings.
-class ThemeManager : public QObject {
+class ThemeManager : public QObject
+{
     Q_OBJECT
     // "system", "light" or "dark"
     Q_PROPERTY(QString mode READ mode WRITE setMode NOTIFY modeChanged)
@@ -49,9 +50,6 @@ private:
     bool targetDark() const;
     void resolveAndApply(bool force = false);
     static QPalette makePalette(bool dark);
-    // Makes the native window title bar follow the app theme (a no-op where
-    // the OS does not support it): without this the frame stays light in dark
-    // mode because DWM ignores the Qt palette.
     void applyTitleBarToAllWindows();
     void applyTitleBar(QWindow *window);
 #ifdef Q_OS_WIN

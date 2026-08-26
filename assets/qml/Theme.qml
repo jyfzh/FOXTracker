@@ -36,16 +36,22 @@ QtObject {
     // signal handlers ("Cannot assign a value to a signal") and break this file.
     readonly property string textOnAccent: dark ? "#10151C" : "#FFFFFF"
     readonly property string textOnError:  "#FFFFFF"
-    readonly property string overlay:    "#B3000000" // 70% black HUD scrim (works over video in both themes)
+    // Translucent backdrop for the viewport HUD chips (tracking state, FPS,
+    // resolution) over the live video. Derived from the theme's `panel` color
+    // (~75–80% alpha), so the chip background visibly follows the theme:
+    // dark-tinted card in dark mode, light-tinted one in light mode, keeping
+    // the themed chip text readable on top of camera footage.
+    readonly property string overlay:    dark ? "#BF282A2E" : "#CCF7F8FA" // panel @ 75%/80% alpha
     readonly property string viewportBg: dark ? "#101114" : "#E9EBEF"
     readonly property string logDebug:   dark ? "#8b949e" : "#6e7681"
     readonly property string logFatal:   dark ? "#FF97A3" : "#B23246"
 
-    // HUD elements sit on the constant dark video scrim in BOTH themes, so
-    // per the dark-bg/light-text rule they stay light regardless of theme.
-    readonly property string hudText:    "#E6E8EB"
-    readonly property string hudDim:     "#9298A3"
-    readonly property string hudSuccess: "#46C78A"
+    // Viewport HUD chip text (tracking state, FPS, resolution). Aliases of the
+    // main palette: the chips now sit on a theme-adaptive `overlay` scrim, so
+    // the text follows the theme too instead of staying frozen at dark values.
+    readonly property string hudText:    text
+    readonly property string hudDim:     textDim
+    readonly property string hudSuccess: success
 
     readonly property string monoFont:  "Consolas"
 }

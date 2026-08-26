@@ -10,27 +10,14 @@ Page {
     id: form
     padding: 8
 
-    // Themed page background: overrides the style default (palette.window),
-    // which does not follow runtime palette changes reliably in Qt 5.
+    // Explicit themed page background (the themed window palette in
+    // MainWindow.qml already colors the style default; this is belt-and-braces).
     background: Rectangle {
         color: Theme.background
     }
 
-    // Explicit themed palette for all descendant controls — see
-    // PreviewPageForm.ui.qml for the rationale; keep in sync with
-    // ThemeManager::makePalette().
-    palette.window: Theme.background
-    palette.windowText: Theme.text
-    palette.base: Theme.input
-    palette.alternateBase: Theme.panel
-    palette.text: Theme.text
-    palette.button: Theme.panel
-    palette.buttonText: Theme.text
-    palette.highlight: Theme.accent
-    palette.highlightedText: Theme.textOnAccent
-    palette.toolTipBase: Theme.panel
-    palette.toolTipText: Theme.text
-    palette.link: Theme.accent
+    // Palette comes from the themed ApplicationWindow (MainWindow.qml);
+    // items inherit it automatically.
 
     property int sel: 0
 
