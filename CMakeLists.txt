@@ -99,6 +99,12 @@ target_link_libraries(FOXTracker PRIVATE
     UGlobalHotkey
 )
 
+if(WIN32)
+    # ThemeManager sets DWMWA_USE_IMMERSIVE_DARK_MODE so the native title bar
+    # follows the app's dark/light theme.
+    target_link_libraries(FOXTracker PRIVATE dwmapi)
+endif()
+
 install(TARGETS FOXTracker
     RUNTIME DESTINATION bin
     BUNDLE DESTINATION .

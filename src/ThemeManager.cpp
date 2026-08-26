@@ -2,6 +2,9 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QEvent>
+#include <QGuiApplication>
+#include <QWindow>
 
 #include "FlightAgxSettings.h"
 
@@ -9,6 +12,11 @@ extern FlightAgxSettings *settings;
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <dwmapi.h>
+// Present in dwmapi.h from the Win10 1903 SDK onward; define for older ones.
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
 #endif
 
 ThemeManager::ThemeManager(QObject *parent)
@@ -27,6 +35,10 @@ ThemeManager::ThemeManager(QObject *parent)
     // cross-platform colorScheme API, so poll the Windows registry cheaply.
     connect(&m_systemPollTimer, &QTimer::timeout, this, &ThemeManager::refreshSystemDark);
     m_systemPollTimer.start(2000);
+
+    // This singleton is instantiated while loading MainWindow.qml, i.e. before
+    // the window is shown; watch later windows so their title bar matches too.
+    qApp->installEventFilter(this);
 
     resolveAndApply(true);
 }
@@ -84,6 +96,8 @@ void ThemeManager::resolveAndApply(bool force)
     // The application palette drives both the Fusion QML style and every
     // embedded QWidget page, so one setPalette keeps everything consistent.
     qApp->setPalette(makePalette(d));
+
+    applyTitleBarToAllWindows();
 }
 
 void ThemeManager::refreshSystemDark()
@@ -141,6 +155,46 @@ QPalette ThemeManager::makePalette(bool dark)
     pal.setColor(QPalette::Disabled, QPalette::Text, dim);
     pal.setColor(QPalette::Disabled, QPalette::ButtonText, dim);
     return pal;
+}
+
+// The QML scene follows Theme.background, but on Windows the native title bar
+// ignores the Qt palette and would stay light in dark mode unless we tell DWM
+// explicitly via DWMWA_USE_IMMERSIVE_DARK_MODE.
+void ThemeManager::applyTitleBarToAllWindows()
+{
+    const QList<QWindow *> windows = QGuiApplication::topLevelWindows();
+    for (QWindow *window : windows)
+    {
+        if (window->isVisible())
+            applyTitleBar(window);
+    }
+}
+
+void ThemeManager::applyTitleBar(QWindow *window)
+{
+#ifdef Q_OS_WIN
+    if (!window || window->parent())
+        return; // popups / child windows have no title bar of their own
+
+    HWND hwnd = reinterpret_cast<HWND>(window->winId());
+    const BOOL dark = m_dark ? TRUE : FALSE;
+    // Attribute 20 works since Win10 1903; build 1809 shipped it as 19.
+    if (FAILED(DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                     &dark, sizeof(dark))))
+        DwmSetWindowAttribute(hwnd, 19, &dark, sizeof(dark));
+#else
+    Q_UNUSED(window)
+#endif
+}
+
+bool ThemeManager::eventFilter(QObject *watched, QEvent *event)
+{
+    if (event->type() == QEvent::Show)
+    {
+        if (QWindow *window = qobject_cast<QWindow *>(watched))
+            applyTitleBar(window);
+    }
+    return QObject::eventFilter(watched, event);
 }
 
 #ifdef Q_OS_WIN

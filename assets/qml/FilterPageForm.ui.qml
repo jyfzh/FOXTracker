@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
+import FOXTracker.Theme 1.0
 
 // Pure declarative UI form for the Filter page.
 // Simple UI -> model wirings (onValueEdited / onToggled) are kept here, matching
@@ -9,6 +10,29 @@ import QtQuick.Layouts 1.12
 Page {
     id: form
     padding: 8
+
+    // Themed page background: overrides the style default (palette.window),
+    // which does not follow runtime palette changes reliably in Qt 5.
+    background: Rectangle {
+        color: Theme.background
+    }
+
+    // Explicit themed palette for all descendant controls — see
+    // PreviewPageForm.ui.qml for the rationale; keep in sync with
+    // ThemeManager::makePalette().
+    palette.window: Theme.background
+    palette.windowText: Theme.text
+    palette.base: Theme.input
+    palette.alternateBase: Theme.panel
+    palette.text: Theme.text
+    palette.button: Theme.panel
+    palette.buttonText: Theme.text
+    palette.highlight: Theme.accent
+    palette.highlightedText: Theme.textOnAccent
+    palette.toolTipBase: Theme.panel
+    palette.toolTipText: Theme.text
+    palette.link: Theme.accent
+
     ScrollView {
         anchors.fill: parent
         contentWidth: availableWidth

@@ -8,6 +8,31 @@ Page {
     id: form
     padding: 10
 
+    // Themed page background: overrides the style default (palette.window),
+    // which does not follow runtime palette changes reliably in Qt 5.
+    background: Rectangle {
+        color: Theme.background
+    }
+
+    // Explicit themed palette for all descendant controls: Qt 5 does not
+    // propagate runtime application-palette changes to already-created items
+    // (verified by experiment), so stock Fusion-styled children would keep
+    // their startup colors — e.g. black labels on a dark background. Binding
+    // the palette here propagates reactively down the control tree instead.
+    // Keep in sync with ThemeManager::makePalette().
+    palette.window: Theme.background
+    palette.windowText: Theme.text
+    palette.base: Theme.input
+    palette.alternateBase: Theme.panel
+    palette.text: Theme.text
+    palette.button: Theme.panel
+    palette.buttonText: Theme.text
+    palette.highlight: Theme.accent
+    palette.highlightedText: Theme.textOnAccent
+    palette.toolTipBase: Theme.panel
+    palette.toolTipText: Theme.text
+    palette.link: Theme.accent
+
     property real posX: 0
     property real posY: 0
     property real posZ: 0
@@ -70,12 +95,12 @@ Page {
 
                         Rectangle {
                             width: 7; height: 7; radius: 3.5
-                            color: form.running ? Theme.success : Theme.textDim
+                            color: form.running ? Theme.hudSuccess : Theme.hudDim
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         Text {
                             text: form.running ? "TRACKING" : "STANDBY"
-                            color: form.running ? Theme.success : Theme.textDim
+                            color: form.running ? Theme.hudSuccess : Theme.hudDim
                             font.family: Theme.monoFont
                             font.pixelSize: 11
                             font.bold: true
@@ -100,7 +125,7 @@ Page {
                         id: hudFps
                         anchors.centerIn: parent
                         text: form.fps.toFixed(1) + " FPS"
-                        color: Theme.text
+                        color: Theme.hudText
                         font.family: Theme.monoFont
                         font.pixelSize: 11
                         font.bold: true
@@ -123,7 +148,7 @@ Page {
                         id: hudRes
                         anchors.centerIn: parent
                         text: form.previewWidth + "\u00D7" + form.previewHeight
-                        color: Theme.textDim
+                        color: Theme.hudDim
                         font.family: Theme.monoFont
                         font.pixelSize: 11
                     }
@@ -217,7 +242,9 @@ Page {
                         text: "\u25B6  Start"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        color: start_button.enabled ? Theme.textOnAccent : Theme.textDim
+                        // Disabled state keeps the darker(accent) navy fill in
+                        // both themes -> light text per the dark-bg/light-text rule.
+                        color: !start_button.enabled ? "#99E6E8EB" : Theme.textOnAccent
                         font.pixelSize: 13
                         font.bold: true
                     }

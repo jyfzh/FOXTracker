@@ -2,8 +2,11 @@
 #define THEMEMANAGER_H
 
 #include <QObject>
+#include <QEvent>
 #include <QTimer>
 #include <QPalette>
+
+class QWindow;
 
 // Owns the UI color theme: "system" | "light" | "dark".
 //
@@ -32,6 +35,11 @@ signals:
     void modeChanged();
     void darkChanged();
 
+protected:
+    // Watches for top-level windows being shown (the singleton exists before
+    // MainWindow does) so their native title bar gets the matching theme.
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private slots:
     // Re-reads the OS preference and re-applies if it changed. Cheap enough
     // to poll; Qt 5 offers no cross-platform signal for this.
@@ -41,6 +49,11 @@ private:
     bool targetDark() const;
     void resolveAndApply(bool force = false);
     static QPalette makePalette(bool dark);
+    // Makes the native window title bar follow the app theme (a no-op where
+    // the OS does not support it): without this the frame stays light in dark
+    // mode because DWM ignores the Qt palette.
+    void applyTitleBarToAllWindows();
+    void applyTitleBar(QWindow *window);
 #ifdef Q_OS_WIN
     static bool systemPrefersDark();
 #endif

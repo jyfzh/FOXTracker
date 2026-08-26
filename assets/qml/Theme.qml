@@ -41,5 +41,11 @@ QtObject {
     readonly property string logDebug:   dark ? "#8b949e" : "#6e7681"
     readonly property string logFatal:   dark ? "#FF97A3" : "#B23246"
 
+    // HUD elements sit on the constant dark video scrim in BOTH themes, so
+    // per the dark-bg/light-text rule they stay light regardless of theme.
+    readonly property string hudText:    "#E6E8EB"
+    readonly property string hudDim:     "#9298A3"
+    readonly property string hudSuccess: "#46C78A"
+
     readonly property string monoFont:  "Consolas"
 }
