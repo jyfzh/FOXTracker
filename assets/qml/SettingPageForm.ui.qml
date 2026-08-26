@@ -4,16 +4,36 @@ import QtQuick.Layouts 1.12
 
 // Pure declarative UI form for the Setting page.
 // Simple UI -> model wirings are kept here, matching the convention used by
-// EkfPageForm.ui.qml. Any heavier logic would live in SettingPage.qml.
+// EkfPageForm.ui.qml. Any heavier logic (including C++ singleton access) lives
+// in SettingPage.qml. The theme ComboBox is exposed via themeComboBox so the
+// logic layer can bind it to the C++ ThemeManager singleton.
 Page {
     id: form
     padding: 8
+
+    // Exposed so SettingPage.qml can wire the theme selection to ThemeManager.
+    property alias themeComboBox: themeBox
     ScrollView {
         anchors.fill: parent
         contentWidth: availableWidth
         ColumnLayout {
             width: parent.width
             spacing: 10
+
+            GroupBox {
+                title: "Appearance"
+                Layout.fillWidth: true
+                RowLayout {
+                    spacing: 8
+                    Label { text: "Theme" }
+                    ComboBox {
+                        id: themeBox
+                        model: ["System", "Light", "Dark"]
+                        // currentIndex + onActivated are wired from SettingPage.qml
+                    }
+                    Item { Layout.fillWidth: true }
+                }
+            }
 
             GroupBox {
                 title: "Output"

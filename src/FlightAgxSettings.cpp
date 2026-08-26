@@ -6,6 +6,15 @@ void FlightAgxSettings::load_from_config_yaml() {
     try {
         qDebug() << "Read config at " << cfg_name.c_str() << "\n";
         config = YAML::LoadFile(cfg_name);
+
+        // UI theme: read right after loading, with its own guard, so a
+        // failure in any of the optional keys below cannot lose it.
+        try {
+            if (config["ui_theme"])
+                ui_theme = config["ui_theme"].as<std::string>();
+        } catch (const YAML::Exception &e) {
+            qWarning() << "Failed to read ui_theme:" << e.what();
+        }
         detect_duration = config["detect_duration"].as<double>();
         camera_id = config["camera_id"].as<int>();
         enable_multithread_detect = config["enable_multithread_detect"].as<bool>();
@@ -95,6 +104,8 @@ void FlightAgxSettings::load_from_config_yaml() {
 
 
 void FlightAgxSettings::write_to_file() {
+    config["ui_theme"] = ui_theme;
+
     config["hotkey_joystick_name0"] = hotkey_joystick_names[0];
     config["hotkey_joystick_button0"] = hotkey_joystick_buttons[0];
 
@@ -102,6 +113,11 @@ void FlightAgxSettings::write_to_file() {
     config["hotkey_joystick_button1"] = hotkey_joystick_buttons[1];
 
     std::ofstream fout(cfg_name.c_str());
+    if (!fout.is_open()) {
+        qWarning() << "Failed to open config for writing at" << cfg_name.c_str()
+                   << "(check file permissions)";
+        return;
+    }
     fout << config;
     fout.close();
     qDebug() << "Succesful write config to file";

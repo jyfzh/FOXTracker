@@ -57,6 +57,8 @@ public:
 
 
     std::string app_path;
+    // UI color theme: "system" | "light" | "dark" (see ThemeManager)
+    std::string ui_theme = "system";
     bool use_ft = false;
     bool use_npclient = false;
     double cov_Q_fsa = 0.006;

@@ -33,6 +33,8 @@ class FoxController : public QObject
     Q_PROPERTY(bool running READ running NOTIFY runningChanged)
     Q_PROPERTY(bool previewEnabled READ previewEnabled NOTIFY previewEnabledChanged)
     Q_PROPERTY(bool alwaysOnTop READ alwaysOnTop WRITE setAlwaysOnTop NOTIFY alwaysOnTopChanged)
+    Q_PROPERTY(int previewWidth READ previewWidth NOTIFY previewFrameReady)
+    Q_PROPERTY(int previewHeight READ previewHeight NOTIFY previewFrameReady)
 
     // ---- EKF noise (log-mapped 0..1 sliders) ----
     Q_PROPERTY(double qNoiseLM READ qNoiseLM WRITE setQNoiseLM NOTIFY settingsChanged)
@@ -102,6 +104,8 @@ public:
     bool running() const { return m_running; }
     bool previewEnabled() const { return m_previewEnabled; }
     bool alwaysOnTop() const { return m_alwaysOnTop; }
+    int previewWidth() const { return m_previewImage.width(); }
+    int previewHeight() const { return m_previewImage.height(); }
 
     QImage previewImage() const { return m_previewImage; }
     Q_INVOKABLE void setWindow(QWindow *w) { m_window = w; }

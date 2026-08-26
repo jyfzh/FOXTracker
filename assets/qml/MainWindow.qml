@@ -3,6 +3,7 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import FOXTracker 1.0
+import FOXTracker.Theme 1.0
 
 // Window + lifecycle logic for the main window.
 // The pure UI declaration (contents) is in MainWindowForm.ui.qml.
@@ -14,20 +15,55 @@ ApplicationWindow {
     minimumWidth: 640
     minimumHeight: 420
     title: "FOXTracker"
-    color: "white"
+    color: Theme.background
 
     footer: ToolBar {
-        background: Rectangle { color: "#cfd1d1" }
+        height: 30
+
+        background: Rectangle {
+            color: Theme.panel
+            Rectangle {
+                anchors.top: parent.top
+                width: parent.width
+                height: 1
+                color: Theme.border
+            }
+        }
+
         RowLayout {
             anchors.fill: parent
-            Item { width: 12 }
-            Label { text: "Face Tracking: " + (fox.running ? "ON" : "OFF") }
-            Item { Layout.fillWidth: true }
-            Label { text: "FPS: " + fox.fps.toFixed(1) }
-            Label {
-                text: "Time: " + fox.timeSec.toFixed(2)
+            spacing: 8
+            Item { Layout.preferredWidth: 6 }
+
+            // Status light + tracking state.
+            Rectangle {
+                width: 8; height: 8; radius: 4
+                color: fox.running ? Theme.success : Theme.textDim
             }
-            Item { width: 12 }
+            Label {
+                text: fox.running ? "TRACKING ON" : "STANDBY"
+                color: fox.running ? Theme.success : Theme.textDim
+                font.family: Theme.monoFont
+                font.pixelSize: 11
+                font.bold: true
+                font.letterSpacing: 1
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: "FPS " + fox.fps.toFixed(1)
+                color: Theme.textDim
+                font.family: Theme.monoFont
+                font.pixelSize: 11
+            }
+            Label {
+                text: "TIME " + fox.timeSec.toFixed(2) + " s"
+                color: Theme.textDim
+                font.family: Theme.monoFont
+                font.pixelSize: 11
+            }
+            Item { Layout.preferredWidth: 10 }
         }
     }
 

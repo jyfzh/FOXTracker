@@ -60,10 +60,13 @@ bool CSV::parseLine(QStringList& ret)
     QStringList list;
     int pos2 = 0;
 
+    // Compare against the decoded string length, not m_device->size(): the
+    // latter counts raw bytes, while m_pos indexes decoded characters. With
+    // multi-byte codecs the two diverge and EOF would never be detected.
     if (line.size() == 0)
     {
         ret = QStringList();
-        return m_device->size() > m_pos;
+        return m_string.length() > m_pos;
     }
     else
     {
@@ -92,8 +95,12 @@ bool CSV::getGameData(int id, unsigned char* table, QString csv_path, QString& g
     for (int i = 0; i < 8; i++)
         table[i] = 0;
 
-    if (id != 0)
-        qDebug() << "csv: lookup game id" << id;
+    // id == 0 means the client hasn't reported a game ID; no entry can match
+    // and scanning the file would only end in "unknown game" noise.
+    if (id == 0)
+        return false;
+
+    qDebug() << "csv: lookup game id" << id;
 
     QString id_str(QString::number(id));
 
@@ -122,6 +129,10 @@ bool CSV::getGameData(int id, unsigned char* table, QString csv_path, QString& g
         //qDebug() << "Column 5: " << gameLine.at(5);		// By
         //qDebug() << "Column 6: " << gameLine.at(6);		// International ID
         //qDebug() << "Column 7: " << gameLine.at(7);		// FaceTrackNoIR ID
+
+        // Blank line (trailing newline, padding): not an error, just skip it.
+        if (gameLine.count() == 0)
+            continue;
 
         if (gameLine.count() == 8)
         {
@@ -156,10 +167,11 @@ bool CSV::getGameData(int id, unsigned char* table, QString csv_path, QString& g
                 return true;
             }
         }
-        else{
+        else
+        {
+            // Don't give up on the whole lookup: log the bad row and keep
+            // scanning, the wanted game may still appear further down.
             qDebug() << "malformed csv line" << lineno;
-            qDebug() << "unknown game connected" << id;
-            return false;
         }
     }
 

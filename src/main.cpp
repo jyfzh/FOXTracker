@@ -3,9 +3,11 @@
 #include <QQmlContext>
 #include <QFontDatabase>
 #include <QDebug>
+#include <QQuickStyle>
 
 #include "foxcontroller.h"
 #include "previewitem.h"
+#include "ThemeManager.h"
 #include "FlightAgxSettings.h"
 #include "LogManager.h"
 
@@ -25,7 +27,22 @@ int main(int argc, char *argv[])
     // embedded into the QML scene via QWidget::createWindowContainer.
     QApplication a(argc, argv);
 
+    // Fusion follows the application palette, which gives both the QML scene
+    // and the legacy embedded QWidget pages a consistent look in any theme.
+    QQuickStyle::setStyle("Fusion");
+
+    // ThemeManager owns the light/dark/system color theme: it applies the
+    // matching QApplication palette (picked up by Fusion + embedded QWidgets)
+    // and exposes the resolved dark state to QML via FOXTracker.ThemeManager,
+    // which assets/qml/Theme.qml maps onto concrete colors.
+    qmlRegisterSingletonType<ThemeManager>(
+        "FOXTracker.ThemeManager", 1, 0, "ThemeManager",
+        [](QQmlEngine *, QJSEngine *) -> QObject * {
+            return new ThemeManager; // the QML engine takes ownership
+        });
+
     qmlRegisterType<PreviewItem>("FOXTracker", 1, 0, "PreviewView");
+    qmlRegisterSingletonType(QUrl("qrc:/qml/Theme.qml"), "FOXTracker.Theme", 1, 0, "Theme");
 
 
 

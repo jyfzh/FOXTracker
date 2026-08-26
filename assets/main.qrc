@@ -4,6 +4,8 @@
         <file>dcs.JPG</file>
         <file>qml/MainWindow.qml</file>
         <file>qml/MainWindowForm.ui.qml</file>
+        <file>qml/Theme.qml</file>
+        <file>qml/NavTabButton.qml</file>
         <file>qml/LcdDisplay.ui.qml</file>
         <file>qml/SliderRow.qml</file>
         <file>qml/LogSlider.qml</file>

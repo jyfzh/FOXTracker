@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import FOXTracker 1.0
+import FOXTracker.Theme 1.0
 
 PreviewPageForm {
     id: form
@@ -14,16 +15,20 @@ PreviewPageForm {
     posePitch: fox.pitch
     poseRoll: fox.roll
     previewController: fox
+    running: fox.running
+    fps: fox.fps
+    previewWidth: fox.previewWidth
+    previewHeight: fox.previewHeight
     readonly property int maxLogEntries: 5000
 
     ListModel { id: fullLog }
 
     function levelColor(level) {
-        if (level === "DEBUG") return "#6b7280"
-        if (level === "WARN")  return "#d97706"
-        if (level === "ERROR") return "#dc2626"
-        if (level === "FATAL") return "#7f1d1d"
-        return "#111827" // INFO and anything else
+        if (level === "DEBUG") return Theme.logDebug
+        if (level === "WARN")  return Theme.warning
+        if (level === "ERROR") return Theme.error
+        if (level === "FATAL") return Theme.logFatal
+        return Theme.text // INFO and anything else
     }
 
     function escapeHtml(s) {
@@ -35,8 +40,13 @@ PreviewPageForm {
 
     function lineHtml(time, level, message, color) {
         return '<font color="' + color + '">[' + level + ']</font> '
-             + '<font color="#8a8a8a">' + time + '</font> '
+             + '<font color="' + Theme.textDim + '">' + time + '</font> '
              + escapeHtml(message)
+    }
+
+    function clearLog() {
+        fullLog.clear()
+        form.logView.clear()
     }
 
     function scrollToEnd() {
@@ -80,40 +90,31 @@ PreviewPageForm {
 
     Connections {
         target: logManager
-        function onLogMessage(msg) {
-            parseAndLog(msg)
-        }
+        function onLogMessage(msg) { parseAndLog(msg) }
     }
 
     Connections {
         target: form.startButton
-
-        function onClicked() {
-            fox.start()
-        }
+        function onClicked() { fox.start() }
     }
 
     Connections {
         target: form.stopButton
-
-        function onClicked() {
-            fox.stop()
-        }
+        function onClicked() { fox.stop() }
     }
 
     Connections {
         target: form.centerButton
-
-        function onClicked() {
-            fox.center()
-        }
+        function onClicked() { fox.center() }
     }
 
     Connections {
         target: form.previewButton
+        function onClicked() { fox.togglePreview() }
+    }
 
-        function onClicked() {
-            fox.togglePreview()
-        }
+    Connections {
+        target: form.clearLogButton
+        function onClicked() { clearLog() }
     }
 }

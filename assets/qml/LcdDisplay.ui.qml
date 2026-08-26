@@ -1,22 +1,29 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.12
+import FOXTracker.Theme 1.0
 
-// LCD-style numeric readout used for the pose / position values.
+// Compact LCD-style numeric readout used for the pose / position rows.
+// Dark inset value box, right-aligned monospaced digits, optional unit (°).
 Rectangle {
-    property real value: 0
+    id: root
 
-    color: "#f2f2f2"
-    border.color: "#555555"
-    border.width: 2
-    radius: 10
-    implicitWidth: 120
-    implicitHeight: 44
+    property real value: 0
+    property string unit: ""
+
+    color: Theme.input
+    border.color: Theme.border
+    border.width: 1
+    radius: 4
+    implicitWidth: 96
+    implicitHeight: 26
 
     Text {
-        anchors.centerIn: parent
-        text: parent.value.toFixed(2)
-        color: "#929292"
-        font.family: "Source Code Variable"
-        font.pixelSize: 18
+        anchors.fill: parent
+        anchors.rightMargin: 10
+        horizontalAlignment: Text.AlignRight
+        verticalAlignment: Text.AlignVCenter
+        text: root.value.toFixed(2) + root.unit
+        color: Theme.text
+        font.family: Theme.monoFont
+        font.pixelSize: 13
     }
 }

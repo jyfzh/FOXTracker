@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
 import QtCharts 2.2
+import FOXTracker.Theme 1.0
 
 // Pure declarative UI form for the EKF page.
 // All logic (signal wiring, chart append, trim timer) lives in EkfPage.qml.
@@ -67,35 +68,50 @@ Page {
             Layout.fillWidth: true
             Layout.fillHeight: true
             antialiasing: true
+            backgroundColor: Theme.panel
+            titleColor: Theme.textDim
             legend.visible: true
             legend.alignment: Qt.AlignBottom
+            legend.labelColor: Theme.textDim
 
-            ValueAxis { id: axX; min: 0; max: 30; tickCount: 10 }
-            ValueAxis { id: ayY; min: -45; max: 45 }
+            ValueAxis {
+                id: axX
+                min: 0; max: 30; tickCount: 10
+                labelsColor: Theme.textDim
+                gridLineColor: Theme.border
+            }
+            ValueAxis {
+                id: ayY
+                min: -45; max: 45
+                labelsColor: Theme.textDim
+                gridLineColor: Theme.border
+            }
 
-            LineSeries { id: sYawP;   name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 0 }
-            LineSeries { id: sYawR;   name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 0 }
-            LineSeries { id: sYawW;   name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 0 }
+            // Series colors are fixed to the semantic theme palette so the
+            // chart remains legible in both dark and light themes.
+            LineSeries { id: sYawP;   name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 0; color: Theme.accent }
+            LineSeries { id: sYawR;   name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 0; color: Theme.warning }
+            LineSeries { id: sYawW;   name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 0; color: Theme.success }
 
-            LineSeries { id: sPitchP; name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 1 }
-            LineSeries { id: sPitchR; name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 1 }
-            LineSeries { id: sPitchW; name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 1 }
+            LineSeries { id: sPitchP; name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 1; color: Theme.accent }
+            LineSeries { id: sPitchR; name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 1; color: Theme.warning }
+            LineSeries { id: sPitchW; name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 1; color: Theme.success }
 
-            LineSeries { id: sRollP;  name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 2 }
-            LineSeries { id: sRollR;  name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 2 }
-            LineSeries { id: sRollW;  name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 2 }
+            LineSeries { id: sRollP;  name: "Pose"; axisX: axX; axisY: ayY; visible: sel === 2; color: Theme.accent }
+            LineSeries { id: sRollR;  name: "Raw";  axisX: axX; axisY: ayY; visible: sel === 2; color: Theme.warning }
+            LineSeries { id: sRollW;  name: "Rate"; axisX: axX; axisY: ayY; visible: sel === 2; color: Theme.success }
 
-            LineSeries { id: sXT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 3 }
-            LineSeries { id: sXTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 3 }
-            LineSeries { id: sXV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 3 }
+            LineSeries { id: sXT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 3; color: Theme.accent }
+            LineSeries { id: sXTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 3; color: Theme.warning }
+            LineSeries { id: sXV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 3; color: Theme.success }
 
-            LineSeries { id: sYT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 4 }
-            LineSeries { id: sYTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 4 }
-            LineSeries { id: sYV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 4 }
+            LineSeries { id: sYT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 4; color: Theme.accent }
+            LineSeries { id: sYTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 4; color: Theme.warning }
+            LineSeries { id: sYV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 4; color: Theme.success }
 
-            LineSeries { id: sZT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 5 }
-            LineSeries { id: sZTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 5 }
-            LineSeries { id: sZV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 5 }
+            LineSeries { id: sZT;  name: "Pos"; axisX: axX; axisY: ayY; visible: sel === 5; color: Theme.accent }
+            LineSeries { id: sZTR; name: "Raw"; axisX: axX; axisY: ayY; visible: sel === 5; color: Theme.warning }
+            LineSeries { id: sZV;  name: "Vel"; axisX: axX; axisY: ayY; visible: sel === 5; color: Theme.success }
         }
     }
 }

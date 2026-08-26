@@ -46,6 +46,7 @@ set(FOXTRACKER_SOURCES
     src/PoseDataSender.cpp
     src/poseremapper.cpp
     src/LogManager.cpp
+    src/ThemeManager.cpp
     src/stereo_bundle_adjustment.cpp
 )
 
@@ -59,6 +60,7 @@ add_executable(FOXTracker WIN32
     "${PROJECT_SOURCE_DIR}/inc/poseremapper.h"
     "${PROJECT_SOURCE_DIR}/inc/LogManager.h"
     inc/LogManager.h
+    inc/ThemeManager.h
     src/LogManager.cpp
 )
 
@@ -79,6 +81,7 @@ target_link_libraries(FOXTracker PRIVATE
     Qt5::Gui
     Qt5::Qml
     Qt5::Quick
+    Qt5::QuickControls2
     Qt5::Network
     Qt5::Widgets
     Qt5::Charts
@@ -102,12 +105,17 @@ install(TARGETS FOXTracker
 )
 
 # Keep runtime files beside the executable for the existing application path
-# lookup in FlightAgxSettings. config.yaml lives inside assets/, so the
-# whole directory copy covers it.
+# lookup in FlightAgxSettings. The directory copy deploys everything except
+# the user's config: assets/config.yaml was renamed to config.template.yaml
+# (a seed only) so that rebuilds never clobber settings saved by the app.
 add_custom_command(TARGET FOXTracker POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory_if_different
         "${PROJECT_SOURCE_DIR}/assets"
         "$<TARGET_FILE_DIR:FOXTracker>/assets"
+    COMMAND "${CMAKE_COMMAND}"
+        -DCONFIG_SRC=${PROJECT_SOURCE_DIR}/assets/config.template.yaml
+        -DCONFIG_DST=$<TARGET_FILE_DIR:FOXTracker>/assets/config.yaml
+        -P "${PROJECT_SOURCE_DIR}/cmake/deploy/ensure_config.cmake"
     COMMENT "Copying runtime assets"
     VERBATIM
 )
