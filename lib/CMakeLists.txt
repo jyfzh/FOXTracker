@@ -16,7 +16,7 @@ target_include_directories(freetrack PUBLIC
     "${PROJECT_SOURCE_DIR}/inc"
 )
 target_link_libraries(freetrack PUBLIC
-    Qt5::Core Qt5::Network Qt5::Widgets
+    Qt6::Core Qt6::Network Qt6::Widgets
     yaml-cpp::yaml-cpp Eigen3::Eigen ${OpenCV_LIBS}
 )
 
@@ -30,7 +30,7 @@ target_include_directories(accela_filter PUBLIC
     "${PROJECT_SOURCE_DIR}/inc"
 )
 target_link_libraries(accela_filter PUBLIC
-    Qt5::Core Eigen3::Eigen ${OpenCV_LIBS}
+    Qt6::Core Eigen3::Eigen ${OpenCV_LIBS}
 )
 
 set(PS3EYE_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/PS3EYEDriver/src")

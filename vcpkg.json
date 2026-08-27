@@ -5,9 +5,11 @@
   "homepage": "https://github.com/jyf/FOXTracker",
   "dependencies": [
     {
-      "name": "qt5",
-      "features": ["essentials", "charts"]
+      "name": "qtbase",
+      "features": ["network", "widgets"]
     },
+    "qtdeclarative",
+    "qtcharts",
     {
       "name": "opencv4",
       "features": ["calib3d", "contrib", "dnn", "eigen", "highgui"]

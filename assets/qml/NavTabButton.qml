@@ -1,5 +1,5 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick
+import QtQuick.Controls
 import FOXTracker.Theme 1.0
 
 // Top navigation tab: small glyph + label, accent underline on the active tab.

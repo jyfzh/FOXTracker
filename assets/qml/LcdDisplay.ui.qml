@@ -1,4 +1,4 @@
-import QtQuick 2.12
+import QtQuick
 import FOXTracker.Theme 1.0
 
 // Compact LCD-style numeric readout used for the pose / position rows.

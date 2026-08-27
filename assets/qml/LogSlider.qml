@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 // Labeled slider whose position is a normalized 0..1 value but displays the
 // actual (log-mapped) quantity, used for EKF noise covariances.

@@ -65,9 +65,16 @@ add_executable(FOXTracker WIN32
 )
 
 # SDL's SDL_main.h (pulled in transitively via QJoysticks) redefines `main`
-# to `SDL_main`, which clobbers our real `main()` and breaks Qt's WinMain
-# (from qtmain.lib). Tell SDL we already provide our own entry point.
+# to `SDL_main`, which clobbers our real `main()` and breaks the Qt entry
+# point library (Qt6::Main, the Qt6 successor of the old qtmain.lib).
+# Tell SDL we already provide our own entry point.
 target_compile_definitions(FOXTracker PRIVATE SDL_MAIN_HANDLED)
+
+# Unlike Qt5, Qt6::Core no longer links the WinMain bootstrap automatically;
+# WIN32 executables must link Qt6::Main themselves.
+if(TARGET Qt6::Main)
+    target_link_libraries(FOXTracker PRIVATE Qt6::Main)
+endif()
 
 target_include_directories(FOXTracker PRIVATE
     "${PROJECT_SOURCE_DIR}"
@@ -77,14 +84,14 @@ target_include_directories(FOXTracker PRIVATE
 )
 
 target_link_libraries(FOXTracker PRIVATE
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Qml
-    Qt5::Quick
-    Qt5::QuickControls2
-    Qt5::Network
-    Qt5::Widgets
-    Qt5::Charts
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::QuickControls2
+    Qt6::Network
+    Qt6::Widgets
+    Qt6::Charts
     ${OpenCV_LIBS}
     Eigen3::Eigen
     ceres
@@ -138,25 +145,37 @@ add_custom_command(TARGET FOXTracker POST_BUILD
 )
 
 # QML modules deployed under qml/ are plugins whose backing Qt DLLs are NOT
-# linked into FOXTracker.exe directly (e.g. import QtCharts loads
-# qml/QtCharts/qtchartsqml2.dll, which needs Qt5Charts.dll). They resolve via
-# PATH inside Qt Creator, but a double-clicked exe would not find them.
+# linked into FOXTracker.exe directly (e.g. import QtTest loads a qml/
+# plugin that needs Qt6Test.dll). Copy each candidate when it exists in the
+# vcpkg install tree; modules outside this project's dependency set simply
+# won't be present, so the copy is skipped.
 if(VCPKG_INSTALLED_DIR AND VCPKG_TARGET_TRIPLET)
     set(FOXTRACKER_QML_RUNTIME_DLLS
-        Qt5Charts        # qml/QtCharts
-        Qt5Multimedia    # qml/QtMultimedia
-        Qt5MultimediaQuick
-        Qt5Test          # qml/QtTest
-        Qt5WebSockets    # qml/QtWebSockets
+        Qt6Charts        # qml/QtCharts
+        Qt6Multimedia    # qml/QtMultimedia
+        Qt6MultimediaQuick
+        Qt6Test          # qml/QtTest
+        Qt6WebSockets    # qml/QtWebSockets
     )
     foreach(_dll ${FOXTRACKER_QML_RUNTIME_DLLS})
-        add_custom_command(TARGET FOXTracker POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-                "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}$<$<CONFIG:Debug>:/debug>/bin/${_dll}$<$<CONFIG:Debug>:d>.dll"
-                "$<TARGET_FILE_DIR:FOXTracker>/"
-            COMMENT "Deploying ${_dll}.dll"
-            VERBATIM
-        )
+        if(EXISTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/${_dll}.dll")
+            add_custom_command(TARGET FOXTracker POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/${_dll}.dll"
+                    "$<TARGET_FILE_DIR:FOXTracker>/"
+                COMMENT "Deploying ${_dll}.dll"
+                VERBATIM
+            )
+        endif()
+        if(EXISTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/${_dll}d.dll")
+            add_custom_command(TARGET FOXTracker POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin/${_dll}d.dll"
+                    "$<TARGET_FILE_DIR:FOXTracker>/"
+                COMMENT "Deploying ${_dll}d.dll (Debug)"
+                VERBATIM
+            )
+        endif()
     endforeach()
 endif()
 

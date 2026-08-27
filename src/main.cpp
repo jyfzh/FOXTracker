@@ -20,7 +20,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<Eigen::Vector3d>("Eigen::Vector3d");
     qRegisterMetaType<Matrix19d>("Matrix19d");
 
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    // Note: high-DPI scaling is enabled by default since Qt 6
+    // (AA_EnableHighDpiScaling no longer exists).
 
     // QApplication (not QGuiApplication) is required because the legacy
     // EKF/Filter/Setting configuration widgets are still QWidget-based and are

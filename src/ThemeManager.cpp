@@ -31,8 +31,8 @@ ThemeManager::ThemeManager(QObject *parent)
             m_mode = saved;
     }
 
-    // Follow OS light/dark switches while in "system" mode. Qt 5 has no
-    // cross-platform colorScheme API, so poll the Windows registry cheaply.
+    // Follow OS light/dark switches while in "system" mode by polling the
+    // Windows registry cheaply.
     connect(&m_systemPollTimer, &QTimer::timeout, this, &ThemeManager::refreshSystemDark);
     m_systemPollTimer.start(2000);
 

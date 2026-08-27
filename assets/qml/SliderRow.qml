@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 
 // Labeled slider bound to a real-valued setting (value in [from, to]).
 // `value` is an alias to the inner Slider so the parent can both read the

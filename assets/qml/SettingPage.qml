@@ -1,6 +1,6 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Layouts 1.12
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import FOXTracker.ThemeManager 1.0
 
 // Logic/controller for the Setting page. The pure UI declaration is in
