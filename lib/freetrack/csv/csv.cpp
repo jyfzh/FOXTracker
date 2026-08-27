@@ -10,7 +10,8 @@
  */
 
 #include "csv.h"
-#include <QTextDecoder>
+#include <QStringDecoder>
+#include <QStringConverter>
 #include <QFile>
 #include <QString>
 #include <QDebug>
@@ -18,9 +19,10 @@
 #include <utility>
 #include <algorithm>
 
-const QTextCodec* const CSV::m_codec = QTextCodec::codecForName("System");
-const QRegExp CSV::m_rx = QRegExp(QString("((?:(?:[^;\\n]*;?)|(?:\"[^\"]*\";?))*)?\\n?"));
-const QRegExp CSV::m_rx2 = QRegExp(QString("(?:\"([^\"]*)\";?)|(?:([^;]*);?)?"));
+// Qt6 removed QRegExp; use QRegularExpression instead. The patterns are
+// unchanged (PCRE2 understands the same (?...) syntax as QRegExp used).
+const QRegularExpression CSV::m_rx = QRegularExpression(QStringLiteral("((?:(?:[^;\\n]*;?)|(?:\"[^\"]*\";?))*)?\\n?"));
+const QRegularExpression CSV::m_rx2 = QRegularExpression(QStringLiteral("(?:\"([^\"]*)\";?)|(?:([^;]*);?)?"));
 
 CSV::CSV(QIODevice* device) :
     m_device(device),
@@ -28,8 +30,10 @@ CSV::CSV(QIODevice* device) :
 {
     if (m_device && m_device->isReadable())
     {
-        QTextDecoder dec(m_codec);
-        m_string = dec.toUnicode(m_device->readAll());
+        // Qt6 removed QTextCodec/QTextDecoder; QStringDecoder (with the
+        // system-locale encoding) is the replacement for codecForName("System").
+        QStringDecoder dec(QStringConverter::System);
+        m_string = dec(m_device->readAll());
     }
 }
 
@@ -37,10 +41,11 @@ QString CSV::readLine()
 {
     QString line;
 
-    if ((m_pos = m_rx.indexIn(m_string,m_pos)) != -1)
+    const QRegularExpressionMatch match = m_rx.match(m_string, m_pos);
+    if (match.hasMatch())
     {
-        line = m_rx.cap(1);
-        m_pos += m_rx.matchedLength();
+        line = match.captured(1);
+        m_pos = match.capturedEnd();
     }
     else
     {
@@ -70,18 +75,19 @@ bool CSV::parseLine(QStringList& ret)
     }
     else
     {
-        while (line.size() > pos2 && (pos2 = m_rx2.indexIn(line, pos2)) != -1)
+        QRegularExpressionMatch match;
+        while (line.size() > pos2 && (match = m_rx2.match(line, pos2)).hasMatch())
         {
             QString col;
-            if (m_rx2.cap(1).size() > 0)
-                col = m_rx2.cap(1);
-            else if (m_rx2.cap(2).size() > 0)
-                col = m_rx2.cap(2);
+            if (match.captured(1).size() > 0)
+                col = match.captured(1);
+            else if (match.captured(2).size() > 0)
+                col = match.captured(2);
 
             list << col;
 
             if (col.size())
-                pos2 += m_rx2.matchedLength();
+                pos2 = match.capturedEnd();
             else
                 pos2++;
         }

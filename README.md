@@ -1,46 +1,32 @@
 # Introduction
-![screenshot](./docs/screenshot.png)
 FOXTracker is a facial head tracker for gaming usage. Perform as TrackIR or [Opentrack](https://github.com/opentrack/opentrack) (pointtracker) as track camera controller for Flight Simulation Games like DCS.
 
-## Prerequst
-A normal web camera.
-
-[opentrack](https://github.com/opentrack/opentrack) is recommend to install now.
-
-Windows 10 x64 is only offically support operating system.
-
 ## Build
-The project uses CMake presets and vcpkg manifest mode. Set `VCPKG_ROOT` to your vcpkg checkout, then run:
+The project builds with [xmake](https://xmake.io). Dependencies are downloaded from [xrepo](https://xrepo.xmake.io); the three git submodules (PS3EYEDriver, QJoysticks, UGlobalHotkey) are wrapped as local xmake packages under `packages/`.
 
-```powershell
-cmake --preset windows-x64
-cmake --build --preset windows-x64-release
+```bash
+# first time only: fetch the submodules (PS3 Eye is optional)
+git submodule update --init
+
+# configure + build (Qt6, OpenCV, dlib, onnxruntime, ... are fetched automatically)
+xmake f -m release
+xmake build -m release
 ```
 
-Use `--preset windows-x64-debug` for a debug build, or pass `--target clean` before building to recreate the build directory. The PS3 Eye submodule is optional; initialize it with `git submodule update --init` to enable camera support.
+Use `-m debug` for a debug build. The Qt6 SDK is downloaded via aqt and OpenCV / Ceres / dlib are built from source, so the first build takes a while.
 
-CMake is the only supported build entry point. The generated executable and runtime files are placed under the CMake build directory.
+`xmake run` launches the app from the build directory; runtime assets (`assets/`) and `qt.conf` are copied next to the executable automatically. The PS3 Eye submodule is optional — without it a header-only stub is used and the camera is simply unavailable.
 
 ## Usage
 This program is still under development, not stable yet. **I will never collect any user data from your camera.**
 
-Download FOXTracker at [Release](https://github.com/xuhao1/FOXTracker/releases)
-
 
 This program supports control games directly or uses Opentrack as backend. For now, the spline function is in development, so use Opentrack is a good idea. If you are using this program individually, please modify the config in the UI or assets/config.yaml.
 
-![c1](./docs/config.PNG)
-
 Just turn your opentrack input to UDP and open FlightAgentX.exe. Everything works fine.
-![c1](./docs/opentracker_config.PNG)
-![c2](./docs/opentracker_config2.PNG)
 
 Also, you may use [dcs.ini](https://github.com/xuhao1/FOXTracker/blob/master/docs/dcs.ini) here.
 
-Video can be found on 
-https://www.bilibili.com/video/BV1fv411k778
-
-Chinese Commentary https://www.bilibili.com/video/BV1ey4y1C7Za
 ## Future Plan (Maybe in a year)
 1. Try to reinforce the robust of the tracker.
 2. Will add spline function.
@@ -49,6 +35,7 @@ Chinese Commentary https://www.bilibili.com/video/BV1ey4y1C7Za
 LGPL
 
 ## Third-party Libraries
+
 [OpenCV](https://opencv.org/)
 
 [dlib](http://dlib.net/)
@@ -66,21 +53,3 @@ LGPL
 [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) Thanks @emilianavt 's network!
 
 [aitracker](https://github.com/AIRLegend/aitrack)
-
-## 介绍
-这是一个基于面部识别的头瞄，用于模拟类游戏。和TrackIR或者[opentrack](https://github.com/opentrack/opentrack)（如国内流行的pointtracker）功能类似，但是只需要摄像头。
-请参阅[中文文档](./docs/user_manual_chinese.md)
-
-
-视频见b站 https://www.bilibili.com/video/BV1ey4y1C7Za
-
-## 未来一年内的开发计划
-
-1. 加强脸瞄的稳定性
-2. 加入曲线编辑功能
-
-
-## 协议
-
-LGPL
-

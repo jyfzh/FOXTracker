@@ -3,7 +3,7 @@
 #include <QQmlContext>
 #include <QFontDatabase>
 #include <QDebug>
-#include <QQuickStyle>
+#include <QtQuickControls2/qquickstyle.h>
 
 #include "foxcontroller.h"
 #include "previewitem.h"

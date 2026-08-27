@@ -3,9 +3,9 @@
 #include <QObject>
 #include <QStringList>
 #include <QIODevice>
-#include <QTextCodec>
-#include <QRegExp>
-#include <QtGlobal>
+#include <QStringDecoder>
+#include <QStringConverter>
+#include <QRegularExpression>
 
 class CSV
 {
@@ -21,6 +21,5 @@ private:
     QString m_string;
     int m_pos;
 
-    static QTextCodec const* const m_codec;
-    static const QRegExp m_rx, m_rx2;
+    static const QRegularExpression m_rx, m_rx2;
 };

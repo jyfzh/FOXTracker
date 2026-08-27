@@ -2,9 +2,9 @@
 #include <QDebug>
 #include <dlib/opencv.h>
 #include <opencv2/opencv.hpp>
-#include "cuda_provider_factory.h"
-//#include "onnxruntime/core/session/dml_provider_factory.h"
-#include "tensorrt_provider_factory.h"
+// onnxruntime >=1.17: provider factory headers were removed.
+// No need for cuda_provider_factory.h / tensorrt_provider_factory.h —
+// AppendExecutionProvider is now part of <onnxruntime_cxx_api.h> (included via FaceDetectors.h).
 using namespace cv;
 
 inline cv::Rect2d rect2roi(dlib::rectangle ret) {
@@ -26,10 +26,28 @@ LandmarkDetector::LandmarkDetector():
     // session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED );
 
     if (settings->enable_gpu) {
-        qDebug("Will use TensorRT to accelerate computing.....");
-        // OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0);
-        // Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_CUDA(session_options, 0));
-        // Ort::ThrowOnError(OrtSessionOptionsAppendExecutionProvider_Tensorrt(session_options, 0));
+        qDebug("Will try to use GPU execution providers (TensorRT/CUDA) ...");
+        // New API (ORT >=1.17): SessionOptions::AppendExecutionProvider replaces
+        // OrtSessionOptionsAppendExecutionProvider_CUDA/Tensorrt and the removed
+        // cuda_provider_factory.h / tensorrt_provider_factory.h headers.
+        // Order matters — first appended has higher priority; ORT falls back to CPU if unavailable.
+        try {
+            session_options.AppendExecutionProvider("TensorRT");
+            qDebug("TensorRT execution provider appended");
+        } catch (const Ort::Exception& e) {
+            qDebug("TensorRT EP not available: %s", e.what());
+        }
+        try {
+            session_options.AppendExecutionProvider("CUDA");
+            qDebug("CUDA execution provider appended");
+        } catch (const Ort::Exception& e) {
+            qDebug("CUDA EP not available: %s", e.what());
+        }
+        // For fine-grained options use the map overload, e.g.:
+        //   session_options.AppendExecutionProvider("CUDA", {{"device_id","0"}});
+        // Or the typed V2 API:
+        //   OrtCUDAProviderOptionsV2 cuda_opts{}; session_options.AppendExecutionProvider_CUDA_V2(cuda_opts);
+        // Diagnostics: Ort::GetAvailableProviders() lists built-in EPs.
     }
 
     for (size_t i = 0; i < settings->emilianavt_models.size(); i ++) {

@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>icons/icon.png</file>
-        <file>dcs.JPG</file>
         <file>qml/MainWindow.qml</file>
         <file>qml/MainWindowForm.ui.qml</file>
         <file>qml/Theme.qml</file>
@@ -18,5 +17,4 @@
         <file>qml/PreviewPage.qml</file>
         <file>qml/PreviewPageForm.ui.qml</file>
     </qresource>
-    <qresource prefix="/freetrack"/>
 </RCC>

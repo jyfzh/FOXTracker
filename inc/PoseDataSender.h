@@ -5,6 +5,7 @@
 #include <QDebug>
 
 class PoseDataSender: public QObject {
+    Q_OBJECT
     QUdpSocket * udpsock = nullptr;
     freetrack * ft = nullptr;
 
