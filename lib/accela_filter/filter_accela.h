@@ -7,10 +7,15 @@
  */
 #pragma once
 
-#include <QMutex>
-#include <QTimer>
 #include <accela-settings.hpp>
-#include <fagx_datatype.h>
+
+// Keep the filter boundary independent of Eigen.  Eigen is header-only and
+// different targets can otherwise select different versions for these values.
+struct accela_state
+{
+    double eul[3] {};
+    double translation[3] {};
+};
 
 enum Axis : int
 {
@@ -27,7 +32,7 @@ enum Axis : int
 struct accela
 {
     accela(settings_accela * _s);
-    std::pair<Eigen::Vector3d, Eigen::Vector3d> filter(Eigen::Vector3d eul, Eigen::Vector3d T, double dt);
+    void filter(const accela_state &input, double dt, accela_state &output);
     void center() { first_run = true; }
 private:
     settings_accela * s = nullptr;

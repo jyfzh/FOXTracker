@@ -57,7 +57,7 @@ StereoBundleAdjustment * StereoBundleAdjustment::create_from_cv_points(std::vect
     return new StereoBundleAdjustment(landmarks3d, landmarks2d, landmarks2d_1_index, confs, Pose::Identity());
 }
 
-std::pair<Pose, Matrix6d> StereoBundleAdjustment::solve(const Pose & initial, bool est_extrinsic) {
+Pose StereoBundleAdjustment::solve(const Pose & initial, bool est_extrinsic) {
     Problem problem;
     double pose_drone[7] = {0}; //x y z qx qy qz qw
     double cam_pose_2_inv[7] = {0};
@@ -126,17 +126,10 @@ std::pair<Pose, Matrix6d> StereoBundleAdjustment::solve(const Pose & initial, bo
         cam_pose_2_est = camera_pose_2;
     }
 
-    ceres::Covariance::Options cov_options;
-    ceres::Covariance covariance(cov_options);
-    std::vector<std::pair<const double*, const double*> > covariance_blocks;
-    covariance_blocks.push_back(std::make_pair(pose_drone, pose_drone));
-    CHECK(covariance.Compute(covariance_blocks, &problem));
-
-    Eigen::Matrix<double, 7, 7, RowMajor> cov_pose_drone;
-    covariance.GetCovarianceBlock(pose_drone, pose_drone, cov_pose_drone.data());
-    // std::cout << "covariance pose_drone\n" << cov_pose_drone << std::endl;
-
-    Eigen::Matrix<double, 6, 6> cov6d = cov_pose_drone.block<6, 6>(0, 0);
-
-    return std::make_pair(est_drone_pose, cov6d);
+    // NOTE: Do NOT compute the pose covariance here. The reprojection system
+    // becomes rank-deficient at large head rotations (degenerate landmark
+    // geometry), which makes ceres::Covariance::Compute() fail and the
+    // previous CHECK() abort the whole application. The covariance was never
+    // consumed by any caller, so it is intentionally omitted.
+    return est_drone_pose;
 }

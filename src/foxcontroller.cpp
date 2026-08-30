@@ -277,18 +277,27 @@ void FoxController::iconActivated(QSystemTrayIcon::ActivationReason reason)
 
 void FoxController::onChartPose6d(double t, Pose6DoF pose)
 {
+    if (t - m_lastChartPose < kChartMinInterval)
+        return;
+    m_lastChartPose = t;
     emit chartPose(t, pose.first.x(), pose.first.y(), pose.first.z(),
                    pose.second.x(), pose.second.y(), pose.second.z());
 }
 
 void FoxController::onChartPose6dRaw(double t, Pose6DoF pose)
 {
+    if (t - m_lastChartRaw < kChartMinInterval)
+        return;
+    m_lastChartRaw = t;
     emit chartRawPose(t, pose.first.x(), pose.first.y(), pose.first.z(),
                       pose.second.x(), pose.second.y(), pose.second.z());
 }
 
 void FoxController::onChartTwist(double t, Eigen::Vector3d w, Eigen::Vector3d v)
 {
+    if (t - m_lastChartTwist < kChartMinInterval)
+        return;
+    m_lastChartTwist = t;
     emit chartTwist(t, w.x(), w.y(), w.z(), v.x(), v.y(), v.z());
 }
 

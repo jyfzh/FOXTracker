@@ -1,20 +1,22 @@
 -- In-tree vendored libraries (NOT git submodules). They are built as normal
 -- xmake targets and consumed by the FOXTracker target via add_deps().
 --
--- Both targets use Qt6, so they use the `qt.static` rule. On MSVC that rule
--- injects the Qt6-required conformance flags (/Zc:__cplusplus, /permissive-),
--- the QT_*_LIB defines and the QtCore link, and it runs moc on any Q_OBJECT
--- header listed in add_files() (see freetrack's ftnoir_protocol_ft.h).
+-- `accela_filter` deliberately has a plain-data API. It must not expose
+-- header-only Eigen types across this target boundary; the application and
+-- the filter can otherwise be compiled against different Eigen versions.
 
 target("accela_filter")
     set_kind("static")
-    add_rules("qt.static")
     add_files("accela_filter/*.cpp")
     -- `accela_filter` is public so dependents (FOXTracker directly includes
     -- <filter_accela.h> / <accela-settings.hpp>) inherit the include path.
-    add_includedirs("accela_filter", path.join(os.projectdir(), "inc"), {public = true})
-    add_packages("qtbase", "qt6widgets", "eigen", "opencv")
+    add_includedirs("accela_filter", {public = true})
     set_languages("c++17")
+
+-- freetrack uses Qt6, so it uses the `qt.static` rule. On MSVC that rule
+-- injects the Qt6-required conformance flags (/Zc:__cplusplus, /permissive-),
+-- the QT_*_LIB defines and the QtCore link, and it runs moc on any Q_OBJECT
+-- header listed in add_files() (see freetrack's ftnoir_protocol_ft.h).
 
 target("freetrack")
     set_kind("static")
@@ -22,10 +24,15 @@ target("freetrack")
     add_files(
         "freetrack/*.cpp",
         "freetrack/csv/*.cpp",
-        "freetrack/freetrackclient/*.c",
         -- Q_OBJECT header: the qt.static rule runs moc on it.
         "freetrack/ftnoir_protocol_ft.h"
     )
+    -- freetrackclient.c is a Windows DLL client and includes Win32 mapping
+    -- APIs. The application-side POSIX shared-memory implementation above is
+    -- used on Linux instead.
+    if is_plat("windows") then
+        add_files("freetrack/freetrackclient/*.c")
+    end
     -- `lib/` is on the include path so `<freetrack/ftnoir_protocol_ft.h>` and
     -- `<accela-settings.hpp>` / `<filter_accela.h>` resolve, matching CMake.
     add_includedirs(
@@ -144,6 +151,42 @@ target("uglobalhotkey")
                 content = content:replace(
                     "#if defined(UGLOBALHOTKEY_LIBRARY)\n#  define UGLOBALHOTKEY_EXPORT Q_DECL_EXPORT\n#else\n#  define UGLOBALHOTKEY_EXPORT Q_DECL_IMPORT\n#endif",
                     "#if defined(UGLOBALHOTKEY_STATIC)\n#  define UGLOBALHOTKEY_EXPORT\n#elif defined(UGLOBALHOTKEY_LIBRARY)\n#  define UGLOBALHOTKEY_EXPORT Q_DECL_EXPORT\n#else\n#  define UGLOBALHOTKEY_EXPORT Q_DECL_IMPORT\n#endif",
+                    {plain = true})
+            elseif f == "uglobalhotkeys.h" then
+                -- The upstream header leaves these handles uninitialized on
+                -- Linux when Qt runs under Wayland. Keep the generated copy
+                -- safe without modifying the submodule checkout.
+                content = content:replace(
+                    "    xcb_connection_t* X11Connection;\n    xcb_window_t X11Wid;\n    xcb_key_symbols_t* X11KeySymbs;",
+                    "    xcb_connection_t* X11Connection = nullptr;\n    xcb_window_t X11Wid = 0;\n    xcb_key_symbols_t* X11KeySymbs = nullptr;",
+                    {plain = true})
+            elseif f == "uglobalhotkeys.cpp" then
+                -- qpa/qplatformnativeinterface.h is a Qt private header and
+                -- is not shipped by many Linux distributions. Qt6 exposes
+                -- the same XCB connection through its public native interface.
+                content = content:replace(
+                    "#include <qpa/qplatformnativeinterface.h>",
+                    "#include <QtGui/qguiapplication_platform.h>\n#include <cstdlib>",
+                    {plain = true})
+                content = content:replace(
+                    "    QWindow wndw;\n    void* v = qApp->platformNativeInterface()->nativeResourceForWindow(\"connection\", &wndw);\n    X11Connection = (xcb_connection_t*)v;\n    X11Wid = xcb_setup_roots_iterator(xcb_get_setup(X11Connection)).data->root;\n    X11KeySymbs = xcb_key_symbols_alloc(X11Connection);",
+                    "    auto *x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>();\n    X11Connection = x11 ? x11->connection() : nullptr;\n    if (X11Connection != nullptr) {\n        X11Wid = xcb_setup_roots_iterator(xcb_get_setup(X11Connection)).data->root;\n        X11KeySymbs = xcb_key_symbols_alloc(X11Connection);\n    }",
+                    {plain = true})
+                content = content:replace(
+                    "    #elif defined(Q_OS_LINUX)\n    regLinuxHotkey(keySeq, id);\n    #endif",
+                    "    #elif defined(Q_OS_LINUX)\n    if (X11Connection != nullptr && X11KeySymbs != nullptr)\n        regLinuxHotkey(keySeq, id);\n    else\n        qWarning() << \"Global hotkeys require an X11 session\";\n    #endif",
+                    {plain = true})
+                content = content:replace(
+                    "    xcb_key_symbols_free(X11KeySymbs);",
+                    "    if (X11KeySymbs != nullptr)\n        xcb_key_symbols_free(X11KeySymbs);",
+                    {plain = true})
+                content = content:replace(
+                    "    UHotkeyData data;\n    UKeyData keyData = QtKeyToLinux(keySeq);\n\n    xcb_keycode_t *keyC = xcb_key_symbols_get_keycode(X11KeySymbs, keyData.key);\n\n    data.keyCode = *keyC;",
+                    "    if (X11Connection == nullptr || X11KeySymbs == nullptr)\n        return;\n\n    UHotkeyData data;\n    UKeyData keyData = QtKeyToLinux(keySeq);\n\n    xcb_keycode_t *keyC = xcb_key_symbols_get_keycode(X11KeySymbs, keyData.key);\n    if (keyC == nullptr) {\n        qWarning() << \"Could not resolve X11 keycode for global hotkey\";\n        return;\n    }\n\n    data.keyCode = *keyC;",
+                    {plain = true})
+                content = content:replace(
+                    "    Registered.insert(id, data);\n}\n\nvoid UGlobalHotkeys::unregLinuxHotkey",
+                    "    Registered.insert(id, data);\n    std::free(keyC);\n    xcb_flush(X11Connection);\n}\n\nvoid UGlobalHotkeys::unregLinuxHotkey",
                     {plain = true})
             end
             io.writefile(path.join(gendir, f), content)

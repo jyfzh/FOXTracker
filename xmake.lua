@@ -27,10 +27,11 @@ add_requires("qt6network")
 add_requires("qt6charts")
 add_requires("opencv")
 
--- Pin Eigen to a single version shared by opencv and ceres-solver to avoid
--- mixing two Eigen builds in one binary.
+-- Eigen is header-only, so every transitive edge must resolve to the same
+-- version. In particular, OpenCV's Eigen feature otherwise selects the latest
+-- package independently from Ceres and can leak a different ABI into targets.
 add_requires("eigen", {version = "3.4.1"})
-add_requireconfs("eigen", {version = "3.4.1", override = true})
+add_requireconfs("**.eigen", {version = "3.4.1", override = true})
 
 add_requires("ceres-solver", {configs = {
     suitesparse = false
@@ -71,7 +72,9 @@ target("FOXTracker")
     )
     -- QQuickStyle lives in QtQuickControls2 which has no xrepo package; link from the SDK directly
     on_load(function (target)
-        if is_mode("debug") then
+        -- Qt uses the `d` suffix for Windows debug libraries. Unix Qt builds
+        -- keep the same library name for both configurations.
+        if is_mode("debug") and is_plat("windows", "mingw") then
             target:add("links", "Qt6QuickControls2d")
         else
             target:add("links", "Qt6QuickControls2")
@@ -93,13 +96,23 @@ target("FOXTracker")
         add_cxflags("/W3", "/utf-8")
         set_encodings("utf-8")
         add_syslinks("dwmapi")
+    elseif is_plat("linux") then
+        -- UGlobalHotkey uses the XCB key-symbol API for X11 global hotkeys.
+        -- OpenCV's static video I/O target also needs its FFmpeg backends
+        -- explicitly on distributions where package metadata omits them.
+        add_syslinks(
+            "xcb", "xcb-keysyms",
+            "avutil", "avcodec", "avformat", "avdevice",
+            "swscale", "swresample"
+        )
+        -- ONNX Runtime is deployed beside the executable below.
+        add_rpathdirs("$ORIGIN")
     end
 
-    -- Deploy runtime assets next to the executable (mirrors the CMake POST_BUILD steps).
+    -- Deploy runtime assets next to the executable.  The application resolves
+    -- models and configuration relative to its executable directory on every
+    -- platform, so this must happen before platform-specific Qt deployment.
     after_build(function (target)
-        if not is_plat("windows") then
-            return
-        end
         local targetdir = target:targetdir()
         os.cp(path.join(os.projectdir(), "assets"), targetdir)
 
@@ -108,6 +121,51 @@ target("FOXTracker")
         local cfgsrc = path.join(os.projectdir(), "assets", "config.template.yaml")
         if not os.isfile(cfgdst) and os.isfile(cfgsrc) then
             os.cp(cfgsrc, cfgdst)
+        end
+
+        local function deploy_onnxruntime()
+            local ort_pkg = target:pkg("onnxruntime")
+            if not ort_pkg then
+                return
+            end
+
+            local installdir = ort_pkg:installdir()
+            if not installdir then
+                return
+            end
+
+            local patterns
+            if is_plat("windows") then
+                patterns = {
+                    "*.dll",
+                    "bin/*.dll",
+                    "lib/*.dll",
+                }
+            elseif is_plat("linux") then
+                patterns = {
+                    "lib/libonnxruntime.so*",
+                    "lib/libonnxruntime_providers_shared.so*",
+                }
+            elseif is_plat("macosx") then
+                patterns = {"lib/libonnxruntime*.dylib*"}
+            end
+
+            if not patterns then
+                return
+            end
+
+            for _, pattern in ipairs(patterns) do
+                for _, runtime_file in ipairs(os.files(path.join(installdir, pattern))) do
+                    -- Always replace an existing copy: incremental builds must
+                    -- not retain an older runtime from a previous package.
+                    os.cp(runtime_file, targetdir)
+                end
+            end
+        end
+        deploy_onnxruntime()
+
+        if not is_plat("windows") then
+            return
         end
 
         -- Self-contained Qt prefix (plugins/ and qml/ resolved next to the exe).
@@ -228,37 +286,6 @@ target("FOXTracker")
                 "Prefix=.\n" ..
                 "Plugins=plugins\n" ..
                 "Qml2Imports=qml\n")
-            -- Copy shared package DLLs (e.g. onnxruntime) next to exe
-            -- Windows searches exe dir before System32; System32 has an
-            -- older onnxruntime 1.17 that would be loaded instead of 1.22.
-            for _, pkg in pairs(target:pkgs()) do
-                local installdir = pkg:installdir()
-                if installdir then
-                    for _, dll in ipairs(os.files(path.join(installdir, "bin", "*.dll"))) do
-                        local dst = path.join(targetdir, path.filename(dll))
-                        if not os.isfile(dst) then os.cp(dll, targetdir) end
-                    end
-                    for _, dll in ipairs(os.files(path.join(installdir, "lib", "*.dll"))) do
-                        local dst = path.join(targetdir, path.filename(dll))
-                        if not os.isfile(dst) then os.cp(dll, targetdir) end
-                    end
-                    for _, dll in ipairs(os.files(path.join(installdir, "*.dll"))) do
-                        local dst = path.join(targetdir, path.filename(dll))
-                        if not os.isfile(dst) then os.cp(dll, targetdir) end
-                    end
-                end
-            end
-            -- Also ensure onnxruntime providers shared is present (fallback)
-            local ort_pkg = target:pkg("onnxruntime")
-            if ort_pkg then
-                local idir = ort_pkg:installdir()
-                if idir then
-                    for _, dll in ipairs(os.files(path.join(idir, "**", "*.dll"))) do
-                        local dst = path.join(targetdir, path.filename(dll))
-                        if not os.isfile(dst) then os.cp(dll, targetdir) end
-                    end
-                end
-            end
             -- windeployqt sometimes skips QtCharts even with --qmldir if the SDK was initially without charts; ensure it manually
             if qt.qmldir and os.isdir(path.join(qt.qmldir, "QtCharts")) then
                 local qc_src = path.join(qt.qmldir, "QtCharts")
@@ -304,32 +331,5 @@ target("FOXTracker")
                 if os.isdir(src) then os.cp(src, path.join(targetdir, "qml", mod)) end
             end
         end
-        -- Fallback path also needs shared DLLs next to exe (same System32 override)
-        for _, pkg in pairs(target:pkgs()) do
-            local installdir = pkg:installdir()
-            if installdir then
-                for _, dll in ipairs(os.files(path.join(installdir, "bin", "*.dll"))) do
-                    local dst = path.join(targetdir, path.filename(dll))
-                    if not os.isfile(dst) then os.cp(dll, targetdir) end
-                end
-                for _, dll in ipairs(os.files(path.join(installdir, "lib", "*.dll"))) do
-                    local dst = path.join(targetdir, path.filename(dll))
-                    if not os.isfile(dst) then os.cp(dll, targetdir) end
-                end
-                for _, dll in ipairs(os.files(path.join(installdir, "*.dll"))) do
-                    local dst = path.join(targetdir, path.filename(dll))
-                    if not os.isfile(dst) then os.cp(dll, targetdir) end
-                end
-            end
-        end
-        local ort_pkg2 = target:pkg("onnxruntime")
-        if ort_pkg2 then
-            local idir = ort_pkg2:installdir()
-            if idir then
-                for _, dll in ipairs(os.files(path.join(idir, "**", "*.dll"))) do
-                    local dst = path.join(targetdir, path.filename(dll))
-                    if not os.isfile(dst) then os.cp(dll, targetdir) end
-                end
-            end
-        end
+
     end)

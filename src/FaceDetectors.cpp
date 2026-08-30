@@ -7,6 +7,28 @@
 // AppendExecutionProvider is now part of <onnxruntime_cxx_api.h> (included via FaceDetectors.h).
 using namespace cv;
 
+#include <QMutex>
+#include <QHash>
+#include <QDateTime>
+
+namespace {
+// Per-callsite throttle (see HeadPoseDetector.cpp). Gates the high-frequency
+// "Face Detection failed..." catch-all so a throwing detector cannot spam
+// the GUI log every frame.
+bool throttledLog(const char* id, qint64 intervalMs)
+{
+    static QMutex mtx;
+    static QHash<QByteArray, qint64> last;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    QMutexLocker lock(&mtx);
+    auto it = last.find(id);
+    if (it != last.end() && now - it.value() < intervalMs)
+        return false;
+    last[id] = now;
+    return true;
+}
+}
+
 inline cv::Rect2d rect2roi(dlib::rectangle ret) {
     return cv::Rect2d(ret.left(), ret.top(), ret.right() - ret.left(), ret.bottom() - ret.top());
 }
@@ -52,8 +74,13 @@ LandmarkDetector::LandmarkDetector():
 
     for (size_t i = 0; i < settings->emilianavt_models.size(); i ++) {
         std::string model_path = settings->emilianavt_models[i];
+#ifdef _WIN32
         std::wstring unicode(model_path.begin(), model_path.end());
-        auto session = new Ort::Session(env, unicode.c_str(), session_options);
+        const wchar_t *ort_model_path = unicode.c_str();
+#else
+        const char *ort_model_path = model_path.c_str();
+#endif
+        auto session = new Ort::Session(env, ort_model_path, session_options);
         sessions.push_back(session);
         qDebug("Added model from %s", model_path.c_str());
     }
@@ -148,7 +175,7 @@ Landmarks LandmarkDetector::detect(cv::Mat & frame, cv::Rect roi) {
         }
         cv::Mat face_crop = frame(roi_i);
 
-        cv::resize(face_crop, face_crop, cv::Size(settings->emi_nn_size, settings->emi_nn_size), NULL, NULL, cv::INTER_LINEAR);
+        cv::resize(face_crop, face_crop, cv::Size(settings->emi_nn_size, settings->emi_nn_size), 0.0, 0.0, cv::INTER_LINEAR);
         face_crop.convertTo(face_crop, CV_32F);
         cv::cvtColor(face_crop, face_crop, cv::COLOR_BGR2RGB);
         normalize(face_crop);
@@ -306,7 +333,7 @@ cv::Rect2d FaceDetector::detect(const cv::Mat & frame, cv::Rect2d predict_roi) {
         return cv::Rect2d(0, 0, 0, 0);
     }
     catch (...) {
-        qDebug() << "Face Detection failed...";
+        if (throttledLog("face_det_failed", 2000)) qDebug() << "Face Detection failed...";
         return cv::Rect2d(0, 0, 0, 0);
     }
 

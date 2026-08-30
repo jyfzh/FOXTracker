@@ -23,12 +23,13 @@
 
 class shm_wrapper final
 {
-    void* mem;
+    void* mem = nullptr;
 #if defined(_WIN32)
-    HANDLE mutex, mapped_file;
+    HANDLE mutex = nullptr;
+    HANDLE mapped_file = nullptr;
 #else
-    int fd;
-    unsigned size;
+    int fd = -1;
+    unsigned size = 0;
 #endif
 
 public:

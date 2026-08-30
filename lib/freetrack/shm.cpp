@@ -96,33 +96,47 @@ bool shm_wrapper::unlock()
 }
 #else
 
-#include <limits.h>
+#include <string>
 
-#pragma GCC diagnostic ignored "-Wunused-result"
 shm_wrapper::shm_wrapper(const char *shm_name, const char* /*mutex_name*/, int map_size) : size(map_size)
 {
-    char filename[PATH_MAX+2] {};
-    strcpy(filename, "/");
-    strcat(filename, shm_name);
-    fd = shm_open(filename, O_RDWR | O_CREAT, 0600);
-    (void) ftruncate(fd, map_size);
+    const std::string filename = std::string("/") + shm_name;
+    fd = shm_open(filename.c_str(), O_RDWR | O_CREAT, 0600);
+    if (fd < 0) {
+        mem = MAP_FAILED;
+        return;
+    }
+
+    if (ftruncate(fd, map_size) != 0) {
+        (void) close(fd);
+        fd = -1;
+        mem = MAP_FAILED;
+        return;
+    }
+
     mem = mmap(nullptr, map_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)0);
+    if (mem == MAP_FAILED) {
+        (void) close(fd);
+        fd = -1;
+    }
 }
 
 shm_wrapper::~shm_wrapper()
 {
-    (void) munmap(mem, size);
-    (void) close(fd);
+    if (mem != nullptr && mem != MAP_FAILED)
+        (void) munmap(mem, size);
+    if (fd >= 0)
+        (void) close(fd);
 }
 
 bool shm_wrapper::lock()
 {
-    return flock(fd, LOCK_EX) == 0;
+    return fd >= 0 && flock(fd, LOCK_EX) == 0;
 }
 
 bool shm_wrapper::unlock()
 {
-    return flock(fd, LOCK_UN) == 0;
+    return fd >= 0 && flock(fd, LOCK_UN) == 0;
 }
 #endif
 

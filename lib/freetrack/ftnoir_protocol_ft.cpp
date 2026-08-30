@@ -12,9 +12,13 @@
 #include "FlightAgxSettings.h"
 
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #define _USE_MATH_DEFINES
 #include <cmath>
+#if defined(_WIN32)
 #include <windows.h>
+#endif
 #include <math.h>
 
 freetrack::~freetrack()
@@ -35,6 +39,7 @@ freetrack::~freetrack()
 
 never_inline void store(float volatile& place, const float value)
 {
+#if defined(_WIN32)
     union
     {
         float f32;
@@ -42,23 +47,36 @@ never_inline void store(float volatile& place, const float value)
     } value_ {};
 
     value_.f32 = value;
-
-//    static_assert(sizeof(value_) == sizeof(float));
-//    static_assert(offsetof(decltype(value_), f32) == offsetof(decltype(value_), i32));
-
     (void)InterlockedExchange((LONG volatile*)&place, value_.i32);
+#else
+    std::uint32_t bits;
+    static_assert(sizeof(bits) == sizeof(value), "FreeTrack fields must be 32-bit");
+    std::memcpy(&bits, &value, sizeof(bits));
+    __atomic_store_n(reinterpret_cast<volatile std::uint32_t*>(&place),
+                     bits, __ATOMIC_SEQ_CST);
+#endif
 }
 
-template<typename t>
-static void store(t volatile& place, t value)
+template<typename t, typename u>
+static void store(t volatile& place, u value)
 {
-//    static_assert(sizeof(t) == 4u);
-    (void)InterlockedExchange((LONG volatile*) &place, (LONG)value);
+    const t converted = static_cast<t>(value);
+#if defined(_WIN32)
+    static_assert(sizeof(t) == sizeof(LONG), "FreeTrack fields must be 32-bit");
+    (void)InterlockedExchange(reinterpret_cast<LONG volatile*>(&place),
+                              static_cast<LONG>(converted));
+#else
+    __atomic_store_n(&place, converted, __ATOMIC_SEQ_CST);
+#endif
 }
 
 static std::int32_t load(std::int32_t volatile& place)
 {
+#if defined(_WIN32)
     return InterlockedCompareExchange((volatile LONG*) &place, 0, 0);
+#else
+    return __atomic_load_n(&place, __ATOMIC_SEQ_CST);
+#endif
 }
 
 
@@ -142,7 +160,11 @@ void freetrack::pose(const double* headpose, const double* raw)
         connected_game = gamename;
     }
     else
+#if defined(_WIN32)
         (void)InterlockedAdd((LONG volatile*)&data->DataID, 1);
+#else
+        (void)__atomic_add_fetch(&data->DataID, 1u, __ATOMIC_SEQ_CST);
+#endif
 }
 
 QString freetrack::game_name()
@@ -152,9 +174,13 @@ QString freetrack::game_name()
 }
 
 void freetrack::start_dummy() {
+#if defined(_WIN32)
     static const QString program(settings->trackir_path.c_str());
     dummyTrackIR.setProgram("\"" + program + "\"");
     dummyTrackIR.start();
+#else
+    qWarning() << "NPClient dummy is only available on Windows";
+#endif
 }
 
 void freetrack::set_protocols(bool ft, bool npclient)

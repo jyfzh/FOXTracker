@@ -5,11 +5,26 @@
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies->
  */
-#include <algorithm>
-#include <QDebug>
-#include <QMutexLocker>
+#include <cmath>
 #include <filter_accela.h>
-#include <utils.h>
+
+namespace {
+
+double clamp(double value, double minimum, double maximum)
+{
+    if (value < minimum)
+        return minimum;
+    if (value > maximum)
+        return maximum;
+    return value;
+}
+
+int signum(double value)
+{
+    return value < 0.0 ? -1 : 1;
+}
+
+} // namespace
 
 accela::accela(settings_accela * _s): s(_s) {}
 
@@ -54,17 +69,17 @@ static void do_deltas(const double* deltas, double* output, F&& fun)
     }
 }
 
-std::pair<Eigen::Vector3d, Eigen::Vector3d> accela::filter(Eigen::Vector3d eul, Eigen::Vector3d T, double dt)
+void accela::filter(const accela_state &state, double dt, accela_state &result)
 {
     double input[6] = {0};
     double output[6] = {0};
 
-    input[TX] = T[0];
-    input[TY] = T[1];
-    input[TZ] = T[2];
-    input[Yaw] = eul(0);
-    input[Pitch] = eul(1);
-    input[Roll] = eul(2);
+    input[TX] = state.translation[0];
+    input[TY] = state.translation[1];
+    input[TZ] = state.translation[2];
+    input[Yaw] = state.eul[0];
+    input[Pitch] = state.eul[1];
+    input[Roll] = state.eul[2];
 
     static constexpr double full_turn = 360.0;	
     static constexpr double half_turn = 180.0;	
@@ -80,7 +95,12 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> accela::filter(Eigen::Vector3d eul, 
             last_output[i] = f;
         }
 
-        return std::make_pair(eul, T);
+        for (unsigned i = 0; i < 3; ++i)
+        {
+            result.eul[i] = input[Yaw + i];
+            result.translation[i] = input[TX + i];
+        }
+        return;
     }
 
     const double rot_thres{s->rot_smoothing};
@@ -139,7 +159,9 @@ std::pair<Eigen::Vector3d, Eigen::Vector3d> accela::filter(Eigen::Vector3d eul, 
         last_output[k] = output[k];
     }
 
-    Eigen::Vector3d ret_T(output[TX], output[TY], output[TZ]);
-    Eigen::Vector3d ret_att(output[Yaw], output[Pitch], output[Roll]);
-    return std::make_pair(ret_att, ret_T);
+    for (unsigned i = 0; i < 3; ++i)
+    {
+        result.eul[i] = output[Yaw + i];
+        result.translation[i] = output[TX + i];
+    }
 }

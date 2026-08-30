@@ -232,6 +232,13 @@ private:
 
     QImage m_previewImage;
 
+    // Per-signal throttle (~30 Hz each) so the QML ChartView is not flooded
+    // when the detector runs at 50-60 Hz (3 signals/frame => 180 appends/s).
+    double m_lastChartPose = -1e9;
+    double m_lastChartRaw  = -1e9;
+    double m_lastChartTwist = -1e9;
+    static constexpr double kChartMinInterval = 0.033;
+
     QTimer *m_timer = nullptr;
     QSystemTrayIcon *m_trayIcon = nullptr;
     QWindow *m_window = nullptr;

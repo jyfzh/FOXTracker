@@ -1,8 +1,12 @@
 // LogManager.cpp
 
 #include "LogManager.h"
+#include <QDateTime>
 
 static LogManager *g_logManager = nullptr;
+
+QMutex LogManager::s_suppressMutex;
+QHash<QByteArray, qint64> LogManager::s_lastSeen;
 
 LogManager::LogManager(QObject *parent)
     : QObject(parent)
@@ -52,6 +56,24 @@ void LogManager::messageHandler(QtMsgType type,
     // 保留原来的控制台输出
     fprintf(stderr, "%s\n", log.toLocal8Bit().data());
 
-    if(g_logManager)
-        emit g_logManager->logMessage(log);
+    if(g_logManager) {
+        // Drop duplicate/repeated lines to protect the GUI event loop from
+        // being flooded by a runaway debug stream (see kSuppressMs). A flood
+        // would otherwise queue thousands of logMessage events per second and
+        // stall preview/chart updates — the "slows down over time" symptom.
+        bool forward = true;
+        {
+            QMutexLocker lock(&s_suppressMutex);
+            QByteArray key = (level + msg).toUtf8();
+            qint64 now = QDateTime::currentMSecsSinceEpoch();
+            auto it = s_lastSeen.find(key);
+            if (it != s_lastSeen.end() && now - it.value() < kSuppressMs) {
+                forward = false;
+            } else {
+                s_lastSeen[key] = now;
+            }
+        }
+        if (forward)
+            emit g_logManager->logMessage(log);
+    }
 }

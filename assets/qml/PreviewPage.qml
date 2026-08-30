@@ -19,7 +19,7 @@ PreviewPageForm {
     fps: fox.fps
     previewWidth: fox.previewWidth
     previewHeight: fox.previewHeight
-    readonly property int maxLogEntries: 5000
+    readonly property int maxLogEntries: 2000
 
     ListModel { id: fullLog }
 
@@ -58,14 +58,19 @@ PreviewPageForm {
     function appendLog(time, level, message) {
         var color = levelColor(level)
         fullLog.append({ time: time, level: level, message: message, color: color })
-        // TextArea.append() inserts plain text, so build the rich text by
-        // concatenation instead (otherwise the <font> tags show literally).
-        form.logView.text += lineHtml(time, level, message, color)
-        scrollToEnd()
+        // Only push into the (expensive) rich-text TextArea while it is
+        // actually visible. When collapsed we keep the lightweight ListModel
+        // and rebuild the view once on expand, avoiding O(n) string rebuilds
+        // on every log line during long runs.
+        if (form.logExpanded) {
+            form.logView.text += lineHtml(time, level, message, color)
+            scrollToEnd()
+        }
 
         if (fullLog.count > maxLogEntries) {
             fullLog.remove(0, fullLog.count - maxLogEntries)
-            rebuildLog() // trim and re-render the visible view
+            if (form.logExpanded)
+                rebuildLog() // trim and re-render the visible view
         }
     }
 
@@ -91,6 +96,16 @@ PreviewPageForm {
     Connections {
         target: logManager
         function onLogMessage(msg) { parseAndLog(msg) }
+    }
+
+    // Rebuild / clear the heavy TextArea lazily so it does no work while the
+    // log strip is collapsed.
+    Connections {
+        target: form
+        function onLogExpandedChanged() {
+            if (form.logExpanded) rebuildLog()
+            else form.logView.text = ""
+        }
     }
 
     Connections {

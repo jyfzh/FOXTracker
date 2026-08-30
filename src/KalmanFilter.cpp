@@ -1,5 +1,5 @@
 #include "KalmanFilter.h"
-#include <qDebug>
+#include <QDebug>
 
 Eigen::Quaterniond w_dot_q(Eigen::Vector3d omg, Eigen::Quaterniond q) {
     Eigen::Quaterniond _w(0, omg.x(), omg.y(), omg.z());

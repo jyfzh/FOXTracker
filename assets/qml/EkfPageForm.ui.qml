@@ -76,7 +76,10 @@ Page {
             id: cv
             Layout.fillWidth: true
             Layout.fillHeight: true
-            antialiasing: true
+            // Antialiasing is expensive for 18 x 120-point polyline redraws
+            // at 30 Hz. Keep it off; enable only for static screenshots.
+            antialiasing: false
+            animationOptions: ChartView.NoAnimation
             backgroundColor: Theme.panel
             titleColor: Theme.textDim
             legend.visible: true
@@ -85,7 +88,7 @@ Page {
 
             ValueAxis {
                 id: axX
-                min: 0; max: 30; tickCount: 10
+                min: 0; max: 3; tickCount: 4
                 labelsColor: Theme.textDim
                 gridLineColor: Theme.border
             }

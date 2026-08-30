@@ -23,9 +23,9 @@
 #endif
 
 #if defined _MSC_VER
-#   define function_name __FUNCSIG__
+#   define ft_function_name __FUNCSIG__
 #else
-#   define function_name __PRETTY_FUNCTION__
+#   define ft_function_name __PRETTY_FUNCTION__
 #endif
 
 #ifdef _MSC_VER

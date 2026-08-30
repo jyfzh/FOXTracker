@@ -1,16 +1,22 @@
 #include "FSANet.h"
 #include "FlightAgxSettings.h"
 #include "fagx_datatype.h"
+#include <QDebug>
 
 FSANet::FSANet():env(ORT_LOGGING_LEVEL_WARNING, "test") {
     Ort::SessionOptions session_options;
     session_options.SetIntraOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    printf("Using Onnxruntime C++ API\n");
+    qDebug() << "Using Onnxruntime C++ API";
+#ifdef _WIN32
     std::wstring unicode(settings->fsanet_model.begin(), settings->fsanet_model.end());
+    const wchar_t *model_path = unicode.c_str();
+#else
+    const char *model_path = settings->fsanet_model.c_str();
+#endif
     try {
-        session = new Ort::Session(env, unicode.c_str(), session_options);
+        session = new Ort::Session(env, model_path, session_options);
     } catch (const Ort::Exception & e) {
         fprintf(stderr, "ORT session creation failed: %s (code %d)\n", e.what(), (int)e.GetOrtErrorCode());
         throw;
@@ -24,7 +30,7 @@ FSANet::FSANet():env(ORT_LOGGING_LEVEL_WARNING, "test") {
                                          // Otherwise need vector<vector<>>
     std::vector<int64_t> output_shape_{1, 3};
 
-    printf("Number of inputs = %zu\n", num_input_nodes);
+    qDebug() << "Number of inputs =" << num_input_nodes;
 
     auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     input_tensor_ = Ort::Value::CreateTensor<float>(memory_info,

@@ -1,7 +1,6 @@
 #include "HeadPoseDetector.h"
 #include <QDebug>
 #include <iostream>
-#include <windows.h>
 #include <exception>
 #include <opencv2/aruco.hpp>
 #include <QTimer>
@@ -9,6 +8,28 @@
 #include <stereo_bundle_adjustment.h>
 using namespace cv;
 using namespace std;
+
+#include <QMutex>
+#include <QHash>
+
+namespace {
+// Per-callsite throttle: returns true at most once per `intervalMs` for a
+// given call-site id. Used to gate high-frequency diagnostic qDebug() calls
+// (e.g. detection failures that otherwise fire every frame/loop) so they
+// cannot flood the GUI log and stall the UI over long runs.
+bool throttledLog(const char* id, qint64 intervalMs)
+{
+    static QMutex mtx;
+    static QHash<QByteArray, qint64> last;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    QMutexLocker lock(&mtx);
+    auto it = last.find(id);
+    if (it != last.end() && now - it.value() < intervalMs)
+        return false;
+    last[id] = now;
+    return true;
+}
+}
 
 cv::Ptr<cv::legacy::Tracker> create_tracker() {
     return cv::legacy::TrackerMedianFlow::create();
@@ -35,7 +56,7 @@ void HeadPoseDetector::loop() {
 
 
     if( frame.empty() ) {
-        qDebug() << "Empty frame";
+        if (throttledLog("empty_frame", 2000)) qDebug() << "Empty frame";
         return;
     }
     double t = QDateTime::currentMSecsSinceEpoch()/1000.0 - t0;
@@ -120,13 +141,31 @@ void HeadPoseDetector::pose_callback(double t, Pose pose) {
     if (last_succ || (settings->use_ekf && inited)) {
         this->on_detect_pose(t_last, make_pair(R*Rface, T));
 
-        auto omg = ekf.get_angular_velocity();
-        auto spd = ekf.get_linear_velocity();
         auto eul = quat2eulers(q0_inv*q);
-        this->on_detect_pose6d(t_last, make_pair(eul, q0_inv*T));
+        Eigen::Vector3d Tq = q0_inv*T;
+        this->on_detect_pose6d(t_last, make_pair(eul, Tq));
+
+        // Angular/linear velocity for the chart "Rate" series. Prefer the EKF's
+        // own estimate; otherwise synthesize it from frame-to-frame deltas so
+        // the rate curve is populated even with use_ekf disabled.
+        Eigen::Vector3d w = Eigen::Vector3d::Zero();
+        Eigen::Vector3d v = Eigen::Vector3d::Zero();
         if (settings->use_ekf) {
-            this->on_detect_twist(t_last, q0_inv*ekf.get_angular_velocity(), q0_inv*ekf.get_linear_velocity());
+            w = q0_inv * ekf.get_angular_velocity();
+            v = q0_inv * ekf.get_linear_velocity();
+        } else if (twist_inited && dt > 1e-4) {
+            Eigen::Vector3d de = eul - prev_eul_twist;
+            for (int i = 0; i < 3; ++i) {
+                while (de[i] > 180.0) de[i] -= 360.0;
+                while (de[i] < -180.0) de[i] += 360.0;
+            }
+            w = de * (0.017453292519943295) / dt;     // deg/s -> rad/s
+            v = (Tq - prev_T_twist) / dt;     // m/s
         }
+        this->on_detect_twist(t_last, w, v);
+        prev_eul_twist = eul;
+        prev_T_twist = Tq;
+        twist_inited = true;
     }
 }
 
@@ -151,8 +190,8 @@ void HeadPoseDetector::run_detect_thread() {
                detect_frame_mtx.lock();
                roi_need_to_detect = cv::Rect2d(0, 0, _frame.cols, _frame.rows);
                detect_frame_mtx.unlock();
-               qDebug() << "Detect failed in thread";
-               Sleep(10);
+               if (throttledLog("detect_failed_thread", 2000)) qDebug() << "Detect failed in thread";
+               QThread::msleep(10);
                continue;
            }
 
@@ -172,7 +211,7 @@ void HeadPoseDetector::run_detect_thread() {
            int frame_size = frames.size();
            frames.clear();
            if(!success_track) {
-               qDebug() << "Tracker failed in detect thread queue size" << frame_size;
+               if (throttledLog("tracker_failed_queue", 2000)) qDebug() << "Tracker failed in detect thread queue size" << frame_size;
                frame_pending_detect = false;
                detect_mtx.unlock();
                continue;
@@ -182,7 +221,7 @@ void HeadPoseDetector::run_detect_thread() {
            detect_mtx.unlock();
 
         } else {
-            Sleep(10);
+            QThread::msleep(10);
         }
     }
 }
@@ -296,7 +335,7 @@ void HeadPoseDetector::stop_slot() {
         main_loop_timer = nullptr;
         ekf.reset();
         //wait a frame
-        Sleep(30);
+        QThread::msleep(30);
 
         if(cap.isOpened()) {
             cap.release();
@@ -391,10 +430,10 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
         }
 
         if (!success && !frame_pending_detect) {
-            qDebug() << "Will detect in main thread";
+            if (throttledLog("will_detect_main", 2000)) qDebug() << "Will detect in main thread";
             TicToc tic;
             roi = fd->detect(frame, cv::Rect2d());
-            qDebug()<< "Tracker failed; Turn to detection" << tic.toc() << "ms";
+            if (throttledLog("tracker_failed_main", 2000)) qDebug()<< "Tracker failed; Turn to detection" << tic.toc() << "ms";
 
             if (roi.area() > MIN_ROI_AREA) {
                 last_roi = roi;
@@ -464,6 +503,19 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     }
     double dt_fsa = fsa.toc();
 
+    // Keep the (FSA-adjusted) face ROI inside the frame. A large head yaw can
+    // shift face_roi.x negative or grow its width past the right edge, and a
+    // large pitch can shrink height past the top. Passing such an ROI to
+    // lmd->detect() would access an out-of-bounds image region and throw,
+    // crashing the app on aggressive head turns.
+    {
+        double x1 = std::clamp(face_roi.x, 0.0, (double)frame.cols - 1);
+        double y1 = std::clamp(face_roi.y, 0.0, (double)frame.rows - 1);
+        double x2 = std::clamp(face_roi.x + face_roi.width,  0.0, (double)frame.cols);
+        double y2 = std::clamp(face_roi.y + face_roi.height, 0.0, (double)frame.rows);
+        face_roi = cv::Rect2d(x1, y1, x2 - x1, y2 - y1);
+    }
+
     TicToc tic1;
     Landmarks lmd_ret;
     if (settings->landmark_detect_method < 0) {
@@ -477,7 +529,7 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     }
 
     if (landmarks.size() != landmarks_3d.size()) {
-        qDebug("Landmark detection failed. 2D pts %d 3D pts %d", landmarks.size(), landmarks_3d.size());
+        if (throttledLog("lmd_failed", 2000)) qDebug("Landmark detection failed. 2D pts %d 3D pts %d", (int)landmarks.size(), (int)landmarks_3d.size());
         if (settings->enable_preview) {
             _show = frame.clone();
             draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
@@ -628,10 +680,9 @@ std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::ve
     // back to unit weights instead of misassigning weights.
     std::vector<float> confs_synth(landmarks.size(), 1.0f);
     auto ba_adjuster = StereoBundleAdjustment::create_from_cv_points(landmarks_3d, landmarks, confs.size() == landmarks.size() ? confs : confs_synth, settings->K, settings->D);
-    Pose pose_face;
-    auto ret = ba_adjuster->solve(pose_face, false);
-    T = ret.first.pos();
-    R = ret.first.R();
+    auto pose_ba = ba_adjuster->solve(Pose::Identity(), false);
+    T = pose_ba.pos();
+    R = pose_ba.R();
     bool success = true;
     //cv::drawFrameAxes(frame, settings->K, cv::Mat(), rvec, tvec, 0.1, 1);
 
@@ -652,7 +703,7 @@ std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::ve
         //sprintf(info, "Tpnp [%3.1f,%3.1f,%3.1f] cm", T.x()*100, T.y()*100, T.z()*100);
         //cv::putText(frame, info, cv::Point2f(20, 100), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 0, 0), 1);
     } else {
-        qDebug() << "pnp Solve failed";
+        if (throttledLog("pnp_failed", 2000)) qDebug() << "pnp Solve failed";
     }
 
     return make_pair(success, Pose(T, R));

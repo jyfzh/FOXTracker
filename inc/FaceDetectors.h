@@ -1,5 +1,6 @@
 #ifndef FACEDETECTOR_H
 #define FACEDETECTOR_H
+#include <QDebug>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/shape_predictor.h>
 #include <opencv2/opencv.hpp>
@@ -11,7 +12,7 @@ class FaceDetector {
     cv::dnn::Net head_detector;
 public:
     FaceDetector() {
-        printf("Path %s", settings->protoPath.c_str());
+        qDebug() << "FaceDetector path:" << QString::fromStdString(settings->protoPath);
         head_detector = cv::dnn::readNetFromCaffe(settings->protoPath, settings->modelPath);
     }
     virtual ~FaceDetector() {

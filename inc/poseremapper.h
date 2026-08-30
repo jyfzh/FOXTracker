@@ -5,6 +5,7 @@
 #include "fagx_datatype.h"
 #include <filter_accela.h>
 #include <QDateTime>
+#include <QTimer>
 
 class PoseRemapper : public QObject
 {

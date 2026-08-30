@@ -1,11 +1,37 @@
 #include "FlightAgxSettings.h"
+#include <QFile>
+#include <QFileInfo>
 #include <iostream>
 #include <fstream>
 
 void FlightAgxSettings::load_from_config_yaml() {
+    const QString config_path = QString::fromStdString(cfg_name);
+    const QString template_path = QString::fromStdString(config_template_name);
+
     try {
-        qDebug() << "Read config at " << cfg_name.c_str() << "\n";
-        config = YAML::LoadFile(cfg_name);
+        // A clean Linux build may not have a user config yet. Seed it from the
+        // deployed template when possible, but still load the template if the
+        // executable directory is read-only.
+        if (!QFile::exists(config_path) && QFile::exists(template_path)) {
+            const QFileInfo config_info(config_path);
+            if (!QDir().mkpath(config_info.absolutePath()) ||
+                !QFile::copy(template_path, config_path)) {
+                qWarning() << "Could not seed config at" << config_path;
+            }
+        }
+
+        if (QFile::exists(config_path)) {
+            qDebug() << "Read config at" << config_path;
+            config = YAML::LoadFile(cfg_name);
+        } else if (QFile::exists(template_path)) {
+            qWarning() << "Config not found at" << config_path
+                       << "; loading template";
+            config = YAML::LoadFile(config_template_name);
+        } else {
+            qWarning() << "Neither config nor template exists at" << config_path;
+            config = YAML::Node(YAML::NodeType::Map);
+            return;
+        }
 
         // UI theme: read right after loading, with its own guard, so a
         // failure in any of the optional keys below cannot lose it.
@@ -111,6 +137,14 @@ void FlightAgxSettings::write_to_file() {
 
     config["hotkey_joystick_name1"] = hotkey_joystick_names[1];
     config["hotkey_joystick_button1"] = hotkey_joystick_buttons[1];
+
+    const QFileInfo config_info(QString::fromStdString(cfg_name));
+    if (!QDir().mkpath(config_info.absolutePath()) &&
+        !QDir(config_info.absolutePath()).exists()) {
+        qWarning() << "Failed to create config directory"
+                   << config_info.absolutePath();
+        return;
+    }
 
     std::ofstream fout(cfg_name.c_str());
     if (!fout.is_open()) {

@@ -4,7 +4,8 @@
 #include <Eigen/Eigen>
 #include <opencv2/core/eigen.hpp>
 #include <chrono>
-#include <QApplication>
+#include <QCoreApplication>
+#include <QDir>
 #include <QDebug>
 #include <yaml-cpp/yaml.h>
 #include <accela-settings.hpp>
@@ -133,23 +134,24 @@ public:
         }
     }
 
-    std::string cfg_name = "/assets/config.yaml";
-    std::string trackir_path = "/assets/TrackIR.exe";
-    std::string support_games_csv = "/assets/facetracknoir supported games.csv";
-    std::string model_66 = "/assets/landmark_models/model_66.txt";
-    std::string model_68 = "/assets/landmark_models/model_68.txt";
+    std::string cfg_name = "assets/config.yaml";
+    std::string config_template_name = "assets/config.template.yaml";
+    std::string trackir_path = "assets/TrackIR.exe";
+    std::string support_games_csv = "assets/facetracknoir supported games.csv";
+    std::string model_66 = "assets/landmark_models/model_66.txt";
+    std::string model_68 = "assets/landmark_models/model_68.txt";
 
-    std::string landmark_model = "/assets/landmark_models/shape_predictor_68_face_landmarks.dat";
-    std::string fsanet_model = "/assets/fsanet_capsule.onnx";
-    std::string protoPath ="/assets/face_detector/deploy.prototxt";
-    std::string modelPath = "/assets/face_detector/res10_300x300_ssd_iter_140000.caffemodel";
+    std::string landmark_model = "assets/landmark_models/shape_predictor_68_face_landmarks.dat";
+    std::string fsanet_model = "assets/fsanet_capsule.onnx";
+    std::string protoPath = "assets/face_detector/deploy.prototxt";
+    std::string modelPath = "assets/face_detector/res10_300x300_ssd_iter_140000.caffemodel";
 
     std::vector<std::string> emilianavt_models{
-        "/assets/landmark_models/lm_modelU_opt.onnx",
-        "/assets/landmark_models/lm_modelV_opt.onnx",
-        "/assets/landmark_models/lm_model1_opt.onnx",
-        "/assets/landmark_models/lm_model2_opt.onnx",
-        "/assets/landmark_models/lm_model3_opt.onnx"
+        "landmark_models/lm_modelU_opt.onnx",
+        "landmark_models/lm_modelV_opt.onnx",
+        "landmark_models/lm_model1_opt.onnx",
+        "landmark_models/lm_model2_opt.onnx",
+        "landmark_models/lm_model3_opt.onnx"
     };
 
 
@@ -180,19 +182,25 @@ public:
         cv::eigen2cv(K_eigen, K);
         cv::eigen2cv(D_eigen, D);
 
-        app_path = QCoreApplication::applicationDirPath().toStdString();
-        trackir_path = app_path + trackir_path;
-        support_games_csv = app_path + support_games_csv;
-        model_66 = app_path + model_66;
-        model_68 = app_path + model_68;
-        landmark_model = app_path + landmark_model;
-        fsanet_model = app_path + fsanet_model;
-        cfg_name = app_path + "/assets/config.yaml";
-        protoPath = app_path + protoPath;
-        modelPath = app_path + modelPath;
+        const QDir app_dir(QCoreApplication::applicationDirPath());
+        app_path = QDir::cleanPath(app_dir.absolutePath()).toStdString();
+        const auto asset_path = [&app_dir](const QString &relative_path) {
+            return app_dir.filePath(QStringLiteral("assets/") + relative_path).toStdString();
+        };
 
-        for (auto & st : emilianavt_models) {
-            st = app_path + st;
+        trackir_path = asset_path(QStringLiteral("TrackIR.exe"));
+        support_games_csv = asset_path(QStringLiteral("facetracknoir supported games.csv"));
+        model_66 = asset_path(QStringLiteral("landmark_models/model_66.txt"));
+        model_68 = asset_path(QStringLiteral("landmark_models/model_68.txt"));
+        landmark_model = asset_path(QStringLiteral("landmark_models/shape_predictor_68_face_landmarks.dat"));
+        fsanet_model = asset_path(QStringLiteral("fsanet_capsule.onnx"));
+        cfg_name = asset_path(QStringLiteral("config.yaml"));
+        config_template_name = asset_path(QStringLiteral("config.template.yaml"));
+        protoPath = asset_path(QStringLiteral("face_detector/deploy.prototxt"));
+        modelPath = asset_path(QStringLiteral("face_detector/res10_300x300_ssd_iter_140000.caffemodel"));
+
+        for (auto &st : emilianavt_models) {
+            st = asset_path(QString::fromStdString(st));
         }
 
         qDebug() << "App run at" << app_path.c_str();

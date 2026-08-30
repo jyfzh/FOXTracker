@@ -3,6 +3,31 @@
 #include <QDebug>
 #include <FlightAgxSettings.h>
 
+namespace {
+
+void apply_accela(accela &filter_instance,
+                  const Eigen::Vector3d &eul,
+                  const Eigen::Vector3d &translation,
+                  double dt,
+                  Eigen::Vector3d &filtered_eul,
+                  Eigen::Vector3d &filtered_translation)
+{
+    accela_state input{};
+    input.eul[0] = eul[0];
+    input.eul[1] = eul[1];
+    input.eul[2] = eul[2];
+    input.translation[0] = translation[0];
+    input.translation[1] = translation[1];
+    input.translation[2] = translation[2];
+
+    accela_state output{};
+    filter_instance.filter(input, dt, output);
+    filtered_eul = Eigen::Vector3d(output.eul[0], output.eul[1], output.eul[2]);
+    filtered_translation = Eigen::Vector3d(output.translation[0], output.translation[1], output.translation[2]);
+}
+
+} // namespace
+
 PoseRemapper::PoseRemapper(QObject *parent) : QObject(parent), _accela(&(settings->accela_s)), 
         _accela2(&(settings->accela_s))
 {
@@ -61,15 +86,10 @@ void PoseRemapper::pose_callback_loop() {
             return;
         }
         if (settings->use_accela) {
-            auto ret = _accela.filter(eul_last, T_last, dt);
-            eul = ret.first;
-            T = ret.second;
+            apply_accela(_accela, eul_last, T_last, dt, eul, T);
 
-            if (settings->double_accela) {
-                auto ret = _accela2.filter(eul, T, dt);
-                eul = ret.first;
-                T = ret.second;
-            }
+            if (settings->double_accela)
+                apply_accela(_accela2, eul, T, dt, eul, T);
         }
 
         this->send_mapped_posedata(t, std::make_pair(eul, T));

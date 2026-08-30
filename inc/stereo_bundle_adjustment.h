@@ -38,6 +38,6 @@ public:
     static StereoBundleAdjustment * create_from_cv_points(std::vector<cv::Point3f> lm3d, 
             std::vector<cv::Point2f> lm2d, const std::vector<float> confs, cv::Mat K, cv::Mat D);
 
-    std::pair<Pose, Matrix6d> solve(const Pose & initial, bool est_extrinsic=false); //Return the pose of landmarks coordinates relative to camera
+    Pose solve(const Pose & initial, bool est_extrinsic=false); //Return the pose of landmarks coordinates relative to camera
     std::vector<double*> landmarks;
 };

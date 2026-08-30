@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <QThread>
+#include <QTimer>
 #include <QDateTime>
 #include <opencv2/core/eigen.hpp>
 #include <fstream>
@@ -124,6 +125,13 @@ class HeadPoseDetector: public QObject {
     double t_last;
     Pose pose_last;
     bool last_succ = false;
+
+    // State used to synthesize angular/linear velocity for the EKF chart's
+    // "Rate" series when the EKF is disabled (the EKF otherwise provides
+    // get_angular_velocity()/get_linear_velocity()).
+    bool twist_inited = false;
+    Eigen::Vector3d prev_eul_twist = Eigen::Vector3d::Zero();
+    Eigen::Vector3d prev_T_twist = Eigen::Vector3d::Zero();
 
 public:
     ~HeadPoseDetector();
