@@ -375,19 +375,19 @@ void FoxController::saveConfig()
 // ---------------- EKF noise (log-mapped) ----------------
 
 double FoxController::qNoiseLM() const { return log_v_inv(settings->cov_Q_lm, qcov_min, qcov_max); }
-void FoxController::setQNoiseLM(double v) { settings->cov_Q_lm = log_v(v, qcov_min, qcov_max); settings->set_value<double>("cov_Q_lm", settings->cov_Q_lm); emit settingsChanged(); }
+void FoxController::setQNoiseLM(double v) { settings->cov_Q_lm = log_v(v, qcov_min, qcov_max); settings->set_value<double>("cov_Q_lm", settings->cov_Q_lm); settings->write_to_file(); emit settingsChanged(); }
 
 double FoxController::qNoiseFSA() const { return log_v_inv(settings->cov_Q_fsa, qcov_min, qcov_max); }
-void FoxController::setQNoiseFSA(double v) { settings->cov_Q_fsa = log_v(v, qcov_min, qcov_max); settings->set_value<double>("cov_Q_fsa", settings->cov_Q_fsa); emit settingsChanged(); }
+void FoxController::setQNoiseFSA(double v) { settings->cov_Q_fsa = log_v(v, qcov_min, qcov_max); settings->set_value<double>("cov_Q_fsa", settings->cov_Q_fsa); settings->write_to_file(); emit settingsChanged(); }
 
 double FoxController::tNoise() const { return log_v_inv(settings->cov_T, tcov_min, tcov_max); }
-void FoxController::setTNoise(double v) { settings->cov_T = log_v(v, tcov_min, tcov_max); settings->set_value<double>("cov_T", settings->cov_T); emit settingsChanged(); }
+void FoxController::setTNoise(double v) { settings->cov_T = log_v(v, tcov_min, tcov_max); settings->set_value<double>("cov_T", settings->cov_T); settings->write_to_file(); emit settingsChanged(); }
 
 double FoxController::vNoise() const { return log_v_inv(settings->cov_V, vcov_min, vcov_max); }
-void FoxController::setVNoise(double v) { settings->cov_V = log_v(v, vcov_min, vcov_max); settings->set_value<double>("cov_V", settings->cov_V); emit settingsChanged(); }
+void FoxController::setVNoise(double v) { settings->cov_V = log_v(v, vcov_min, vcov_max); settings->set_value<double>("cov_V", settings->cov_V); settings->write_to_file(); emit settingsChanged(); }
 
 double FoxController::wNoise() const { return log_v_inv(settings->cov_W, wcov_min, wcov_max); }
-void FoxController::setWNoise(double v) { settings->cov_W = log_v(v, wcov_min, wcov_max); settings->set_value<double>("cov_W", settings->cov_W); emit settingsChanged(); }
+void FoxController::setWNoise(double v) { settings->cov_W = log_v(v, wcov_min, wcov_max); settings->set_value<double>("cov_W", settings->cov_W); settings->write_to_file(); emit settingsChanged(); }
 
 // ---------------- Filter (real-value) ----------------
 

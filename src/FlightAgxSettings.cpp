@@ -132,6 +132,39 @@ void FlightAgxSettings::load_from_config_yaml() {
 void FlightAgxSettings::write_to_file() {
     config["ui_theme"] = ui_theme;
 
+    // ---- Persist EKF noise (mirrors load_from_config_yaml) ----
+    config["cov_Q_lm"] = cov_Q_lm;
+    config["cov_Q_fsa"] = cov_Q_fsa;
+    config["cov_T"] = cov_T;
+    config["cov_V"] = cov_V;
+    config["cov_W"] = cov_W;
+
+    // ---- Persist Filter / remapper curves + Accela ----
+    config["inp_bound_x"] = inp_bound_trans.x();
+    config["inp_bound_y"] = inp_bound_trans.y();
+    config["inp_bound_z"] = inp_bound_trans.z();
+    config["inp_bound_yaw"] = inp_bound_eul(0);
+    config["inp_bound_pitch"] = inp_bound_eul(1);
+    config["inp_bound_roll"] = inp_bound_eul(2);
+    config["out_bound_x"] = out_bound_trans.x();
+    config["out_bound_y"] = out_bound_trans.y();
+    config["out_bound_z"] = out_bound_trans.z();
+    config["out_bound_yaw"] = out_bound_eul(0);
+    config["out_bound_pitch"] = out_bound_eul(1);
+    config["out_bound_roll"] = out_bound_eul(2);
+    config["expo_trans_x"] = expo_trans.x();
+    config["expo_trans_y"] = expo_trans.y();
+    config["expo_trans_z"] = expo_trans.z();
+    config["expo_eul_yaw"] = expo_eul(0);
+    config["expo_eul_pitch"] = expo_eul(1);
+    config["expo_eul_roll"] = expo_eul(2);
+    config["use_accela"] = use_accela;
+    config["double_accela"] = double_accela;
+    config["accela_rot_smoothing"] = accela_s.rot_smoothing;
+    config["accela_rot_deadzone"] = accela_s.rot_deadzone;
+    config["accela_pos_smoothing"] = accela_s.pos_smoothing;
+    config["accela_pos_deadzone"] = accela_s.pos_deadzone;
+
     config["hotkey_joystick_name0"] = hotkey_joystick_names[0];
     config["hotkey_joystick_button0"] = hotkey_joystick_buttons[0];
 

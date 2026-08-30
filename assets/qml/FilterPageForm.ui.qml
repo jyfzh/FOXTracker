@@ -77,6 +77,12 @@ Page {
                     CheckBox { text: "Double Accela"; checked: fox.doubleAccela; onToggled: fox.doubleAccela = checked }
                 }
             }
+
+            Button {
+                text: "Save Config"
+                Layout.alignment: Qt.AlignRight
+                onClicked: fox.saveConfig()
+            }
         }
     }
 }
