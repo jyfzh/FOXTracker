@@ -57,28 +57,7 @@ Page {
                     Label { text: "UDP Host" }
                     TextField { text: fox.udpHost; onEditingFinished: fox.udpHost = text }
                     Label { text: "UDP Port" }
-                    SpinBox { from: 1; to: 65535; value: fox.port; onValueModified: fox.port = value }
-                }
-            }
-
-            GroupBox {
-                title: "Camera"
-                Layout.fillWidth: true
-                GridLayout {
-                    columns: 2
-                    rowSpacing: 4
-                    columnSpacing: 16
-                    Label { text: "Camera ID" }
-                    SpinBox { from: 0; to: 8; value: fox.cameraId; onValueModified: fox.cameraId = value }
-                    Label { text: "Detect Duration" }
-                    SpinBox { from: 1; to: 120; value: fox.detectDuration; onValueModified: fox.detectDuration = value }
-                    Label { text: "FPS" }
-                    SpinBox { from: 1; to: 240; value: fox.detectFps; onValueModified: fox.detectFps = value }
-                    Label { text: "Gain" }
-                    Slider { from: 0; to: 1; stepSize: 0.01; value: fox.cameraGain; Layout.fillWidth: true; onMoved: fox.cameraGain = value }
-                    Label { text: "Exposure" }
-                    Slider { from: 0; to: 1; stepSize: 0.01; value: fox.cameraExpo; Layout.fillWidth: true; onMoved: fox.cameraExpo = value }
-                    CheckBox { text: "Auto Exposure"; checked: fox.enableAutoExpo; onToggled: fox.enableAutoExpo = checked }
+                    SpinBox { from: 1; to: 65535; value: fox.port; editable: true; onValueModified: fox.port = value }
                 }
             }
 
@@ -97,7 +76,25 @@ Page {
                         onActivated: fox.landmarkDetectMethod = currentIndex - 1
                     }
                     Label { text: "PnP/FSA Offset" }
-                    Slider { from: 0; to: 1; stepSize: 0.01; value: fox.pitchOffsetFsaPnp; Layout.fillWidth: true; onMoved: fox.pitchOffsetFsaPnp = value }
+                    Slider {
+                        from: 0; to: 1; stepSize: 0.01; value: fox.pitchOffsetFsaPnp; Layout.fillWidth: true; onMoved: fox.pitchOffsetFsaPnp = value
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: (event) => {
+                                var delta = event.angleDelta.y
+                                if (delta === 0) return
+                                var step = 0.01
+                                var steps = Math.round(delta / 120)
+                                var newVal = parent.value + steps * step
+                                newVal = Math.max(parent.from, Math.min(parent.to, newVal))
+                                if (newVal !== parent.value) {
+                                    parent.value = newVal
+                                    fox.pitchOffsetFsaPnp = newVal
+                                }
+                                event.accepted = true
+                            }
+                        }
+                    }
                 }
             }
 

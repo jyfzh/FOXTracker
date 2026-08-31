@@ -1,6 +1,8 @@
 ui_theme: light
 detect_duration: 10
 camera_id: 0
+camera_width: 640
+camera_height: 480
 enable_multithread_detect: true
 retrack_queue_size: 10
 fps: 60

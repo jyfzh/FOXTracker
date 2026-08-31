@@ -32,6 +32,9 @@ Page {
 
     property var previewController: null
     property bool logExpanded: false
+    property bool cameraExpanded: false
+    property bool positionExpanded: true
+    property bool poseExpanded: true
 
     property alias logView: log_area
     property alias logFlick: log_flick
@@ -40,6 +43,16 @@ Page {
     property alias previewButton: preview_button
     property alias centerButton: center_button
     property alias clearLogButton: clear_log_button
+
+    onCameraExpandedChanged: {
+        if (cameraExpanded) {
+            positionExpanded = false
+            poseExpanded = false
+        } else {
+            positionExpanded = true
+            poseExpanded = true
+        }
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -141,127 +154,338 @@ Page {
                 }
             }
 
-            // ---- Right column: data cards + controls -------------------
+            // ---- Right column: data cards + camera + controls ---------
             // maximumWidth is required: a nested ColumnLayout containing
             // fillWidth children reports an infinite maximum width, which
             // would otherwise starve the fillWidth viewport (Qt layouts trap).
             ColumnLayout {
-                Layout.preferredWidth: 250
-                Layout.maximumWidth: 250
-                Layout.alignment: Qt.AlignTop
-                spacing: 14
+                Layout.preferredWidth: 280
+                Layout.maximumWidth: 280
+                Layout.fillHeight: true
+                spacing: 10
 
-                ColumnLayout {
+                ScrollView {
                     Layout.fillWidth: true
-                    spacing: 6
-
-                    Label {
-                        text: "POSITION"
-                        color: Theme.textDim
-                        font.pixelSize: 11
-                        font.bold: true
-                        font.letterSpacing: 1.5
-                    }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Theme.border
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        rowSpacing: 6
-                        columnSpacing: 10
-
-                        Label {
-                            text: "X"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: posX
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: "Y"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: posY
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: "Z"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: posZ
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    Label {
-                        text: "POSE"
-                        color: Theme.textDim
-                        font.pixelSize: 11
-                        font.bold: true
-                        font.letterSpacing: 1.5
-                    }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: Theme.border
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        rowSpacing: 6
-                        columnSpacing: 10
-
-                        Label {
-                            text: "Yaw"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: poseYaw
-                            unit: "\u00B0"
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: "Pitch"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: posePitch
-                            unit: "\u00B0"
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            text: "Roll"
-                            color: Theme.textDim
-                            font.pixelSize: 12
-                        }
-                        LcdDisplay {
-                            value: poseRoll
-                            unit: "\u00B0"
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-
-                Item {
                     Layout.fillHeight: true
+                    contentWidth: availableWidth
+                    clip: true
+                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+
+                    ColumnLayout {
+                        width: parent.width
+                        spacing: 14
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Label {
+                                    text: "POSITION"
+                                    color: Theme.textDim
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    font.letterSpacing: 1.5
+                                }
+                                Item { Layout.fillWidth: true }
+                                Button {
+                                    id: positionToggle
+                                    flat: true
+                                    hoverEnabled: true
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+                                    onClicked: form.positionExpanded = !form.positionExpanded
+                                    contentItem: Text {
+                                        text: form.positionExpanded ? "\u25BC" : "\u25B2"
+                                        color: positionToggle.hovered ? Theme.text : Theme.textDim
+                                        font.pixelSize: 10
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: null
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: form.positionExpanded ? positionContent.implicitHeight : 0
+                                clip: true
+                                Behavior on Layout.preferredHeight {
+                                    NumberAnimation { duration: 140; easing.type: Easing.OutQuad }
+                                }
+
+                                ColumnLayout {
+                                    id: positionContent
+                                    width: parent.width
+                                    spacing: 6
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 1
+                                        color: Theme.border
+                                    }
+                                    GridLayout {
+                                        Layout.fillWidth: true
+                                        columns: 2
+                                        rowSpacing: 6
+                                        columnSpacing: 10
+
+                                        Label {
+                                            text: "X"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: posX
+                                            Layout.fillWidth: true
+                                        }
+                                        Label {
+                                            text: "Y"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: posY
+                                            Layout.fillWidth: true
+                                        }
+                                        Label {
+                                            text: "Z"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: posZ
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 6
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+                                Label {
+                                    text: "POSE"
+                                    color: Theme.textDim
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    font.letterSpacing: 1.5
+                                }
+                                Item { Layout.fillWidth: true }
+                                Button {
+                                    id: poseToggle
+                                    flat: true
+                                    hoverEnabled: true
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+                                    onClicked: form.poseExpanded = !form.poseExpanded
+                                    contentItem: Text {
+                                        text: form.poseExpanded ? "\u25BC" : "\u25B2"
+                                        color: poseToggle.hovered ? Theme.text : Theme.textDim
+                                        font.pixelSize: 10
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: null
+                                }
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: form.poseExpanded ? poseContent.implicitHeight : 0
+                                clip: true
+                                Behavior on Layout.preferredHeight {
+                                    NumberAnimation { duration: 140; easing.type: Easing.OutQuad }
+                                }
+
+                                ColumnLayout {
+                                    id: poseContent
+                                    width: parent.width
+                                    spacing: 6
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 1
+                                        color: Theme.border
+                                    }
+                                    GridLayout {
+                                        Layout.fillWidth: true
+                                        columns: 2
+                                        rowSpacing: 6
+                                        columnSpacing: 10
+
+                                        Label {
+                                            text: "Yaw"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: poseYaw
+                                            unit: "\u00B0"
+                                            Layout.fillWidth: true
+                                        }
+                                        Label {
+                                            text: "Pitch"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: posePitch
+                                            unit: "\u00B0"
+                                            Layout.fillWidth: true
+                                        }
+                                        Label {
+                                            text: "Roll"
+                                            color: Theme.textDim
+                                            font.pixelSize: 12
+                                        }
+                                        LcdDisplay {
+                                            value: poseRoll
+                                            unit: "\u00B0"
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+                    }
+                }
+
+
+                // ---- Collapsible Camera settings above Start (upward) ----
+                Item {
+                    id: cameraContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: form.cameraExpanded ? cameraHeader.implicitHeight + (cameraContent.implicitHeight + 8) + 6 : cameraHeader.implicitHeight
+                    clip: true
+                    Behavior on Layout.preferredHeight {
+                        NumberAnimation { duration: 140; easing.type: Easing.OutQuad }
+                    }
+
+                    // Header anchored to bottom (fixed near Start)
+                    RowLayout {
+                        id: cameraHeader
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        spacing: 6
+
+                        Label {
+                            text: "CAMERA"
+                            color: Theme.textDim
+                            font.pixelSize: 11
+                            font.bold: true
+                            font.letterSpacing: 1.5
+                        }
+                        Item { Layout.fillWidth: true }
+                        Button {
+                            id: cameraToggle
+                            flat: true
+                            hoverEnabled: true
+                            implicitWidth: 24
+                            implicitHeight: 24
+                            onClicked: form.cameraExpanded = !form.cameraExpanded
+                            contentItem: Text {
+                                text: form.cameraExpanded ? "\u25BC" : "\u25B2"
+                                color: cameraToggle.hovered ? Theme.text : Theme.textDim
+                                font.pixelSize: 10
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            background: null
+                        }
+                    }
+
+                    // Content above header, expands upward
+                    Item {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: cameraHeader.top
+                        anchors.bottomMargin: 6
+                        clip: true
+
+                        ColumnLayout {
+                            id: cameraContent
+                            width: parent.width
+                            spacing: 8
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: Theme.border
+                            }
+
+                            GridLayout {
+                                columns: 2
+                                rowSpacing: 6
+                                columnSpacing: 10
+                                Layout.fillWidth: true
+                                Label { text: "Camera ID"; color: Theme.textDim; font.pixelSize: 12 }
+                                SpinBox { from: 0; to: 8; value: fox.cameraId; editable: true; onValueModified: fox.cameraId = value; Layout.fillWidth: true }
+                                Label { text: "Detect Duration"; color: Theme.textDim; font.pixelSize: 12 }
+                                SpinBox { from: 1; to: 120; value: fox.detectDuration; editable: true; onValueModified: fox.detectDuration = value; Layout.fillWidth: true }
+                                Label { text: "FPS"; color: Theme.textDim; font.pixelSize: 12 }
+                                SpinBox { from: 1; to: 240; value: fox.detectFps; editable: true; onValueModified: fox.detectFps = value; Layout.fillWidth: true }
+                                Label { text: "Resolution"; color: Theme.textDim; font.pixelSize: 12 }
+                                ComboBox {
+                                    model: ["640x480", "320x240", "800x600", "1280x720", "1920x1080"]
+                                    currentIndex: fox.cameraResolution
+                                    onActivated: fox.cameraResolution = currentIndex
+                                    Layout.fillWidth: true
+                                    contentItem: Text {
+                                        text: parent.displayText
+                                        color: Theme.text
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    delegate: ItemDelegate {
+                                        width: parent.width
+                                        contentItem: Text {
+                                            text: modelData
+                                            color: highlighted ? Theme.textOnAccent : Theme.text
+                                            font.pixelSize: 12
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                        }
+                                        background: Rectangle {
+                                            color: highlighted ? Theme.accent : "transparent"
+                                        }
+                                    }
+                                    WheelHandler {
+                                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                        onWheel: (event) => {
+                                            var d = event.angleDelta.y
+                                            if (d === 0) return
+                                            var idx = parent.currentIndex
+                                            if (d > 0) idx = Math.min(parent.count - 1, idx + 1)
+                                            else idx = Math.max(0, idx - 1)
+                                            if (idx !== parent.currentIndex) {
+                                                parent.currentIndex = idx
+                                                fox.cameraResolution = idx
+                                            }
+                                            event.accepted = true
+                                        }
+                                    }
+                                }
+                            }
+                            SliderRow { label: "Gain"; from: 0; to: 1; decimals: 2; value: fox.cameraGain; onValueEdited: fox.cameraGain = v; Layout.fillWidth: true }
+                            SliderRow { label: "Exposure"; from: 0; to: 1; decimals: 2; value: fox.cameraExpo; onValueEdited: fox.cameraExpo = v; enabled: !fox.enableAutoExpo; Layout.fillWidth: true }
+                            CheckBox { text: "Auto Exposure"; checked: fox.enableAutoExpo; onToggled: fox.enableAutoExpo = checked }
+                            Button { text: "Save Config"; Layout.alignment: Qt.AlignRight; onClicked: fox.saveConfig() }
+                        }
+                    }
                 }
 
                 // Primary action: Start / Stop.

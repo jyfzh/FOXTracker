@@ -44,6 +44,8 @@ public:
     int detect_duration = 10;
     bool enable_preview = true;
     int camera_id = 0;
+    int camera_width = 640;
+    int camera_height = 480;
     bool enable_multithread_detect = true;
     int retrack_queue_size = 10;
     double fps = 30;

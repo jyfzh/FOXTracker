@@ -52,7 +52,12 @@ void HeadPoseDetector::loop()
     {
         if (ps3_frame.empty())
         {
-            ps3_frame = cv::Mat(480, 640, CV_8UC3);
+            ps3_frame = cv::Mat(settings->camera_height, settings->camera_width, CV_8UC3);
+        }
+        // Reallocate if resolution changed
+        if (ps3_frame.cols != settings->camera_width || ps3_frame.rows != settings->camera_height)
+        {
+            ps3_frame = cv::Mat(settings->camera_height, settings->camera_width, CV_8UC3);
         }
         ps3eye_grab_frame(ps3cam, ps3_frame.data);
         frame = ps3_frame;
@@ -314,7 +319,7 @@ void HeadPoseDetector::run_thread()
     qDebug("%d PS3 EYE connected.", ps3eye_count_connected());
     if (ps3eye_count_connected() > 0)
     {
-        ps3cam = ps3eye_open(settings->camera_id, 640, 480, settings->fps, PS3EYE_FORMAT_BGR);
+        ps3cam = ps3eye_open(settings->camera_id, settings->camera_width, settings->camera_height, settings->fps, PS3EYE_FORMAT_BGR);
         set_auto_expo(settings->enable_auto_expo);
         set_gain(settings->camera_gain);
         set_expo(settings->camera_expo);
@@ -326,7 +331,7 @@ void HeadPoseDetector::run_thread()
             qDebug() << "Not able to open camera" << settings->camera_id << "exiting";
             {
                 std::lock_guard<std::mutex> lock(preview_mtx);
-                preview_image = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
+                preview_image = cv::Mat(settings->camera_height, settings->camera_width, CV_8UC3, cv::Scalar(0, 0, 0));
                 char warn[100] = {0};
                 sprintf(warn, "Camera ID %d Error. Change it in config menu!!!", settings->camera_id);
                 cv::putText(preview_image, warn, cv::Point2f(20, 240), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
@@ -338,8 +343,8 @@ void HeadPoseDetector::run_thread()
             }
             return;
         }
-        cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-        cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, settings->camera_width);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, settings->camera_height);
         cap.set(cv::CAP_PROP_FPS, settings->fps);
     }
 

@@ -43,6 +43,8 @@ void FlightAgxSettings::load_from_config_yaml() {
         }
         detect_duration = config["detect_duration"].as<double>();
         camera_id = config["camera_id"].as<int>();
+        if (config["camera_width"]) camera_width = config["camera_width"].as<int>();
+        if (config["camera_height"]) camera_height = config["camera_height"].as<int>();
         enable_multithread_detect = config["enable_multithread_detect"].as<bool>();
         retrack_queue_size = config["retrack_queue_size"].as<int>();
         fps = config["fps"].as<double>();

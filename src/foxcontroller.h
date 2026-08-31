@@ -81,6 +81,9 @@ class FoxController : public QObject
     Q_PROPERTY(bool enableAutoExpo READ enableAutoExpo WRITE setEnableAutoExpo NOTIFY settingsChanged)
     Q_PROPERTY(double cameraGain READ cameraGain WRITE setCameraGain NOTIFY settingsChanged)
     Q_PROPERTY(double cameraExpo READ cameraExpo WRITE setCameraExpo NOTIFY settingsChanged)
+    Q_PROPERTY(int cameraWidth READ cameraWidth WRITE setCameraWidth NOTIFY settingsChanged)
+    Q_PROPERTY(int cameraHeight READ cameraHeight WRITE setCameraHeight NOTIFY settingsChanged)
+    Q_PROPERTY(int cameraResolution READ cameraResolution WRITE setCameraResolution NOTIFY settingsChanged)
     Q_PROPERTY(double pitchOffsetFsaPnp READ pitchOffsetFsaPnp WRITE setPitchOffsetFsaPnp NOTIFY settingsChanged)
 
     // ---- Hotkey display ----
@@ -168,6 +171,12 @@ public:
     void setCameraGain(double v);
     double cameraExpo() const { return settings->camera_expo; }
     void setCameraExpo(double v);
+    int cameraWidth() const { return settings->camera_width; }
+    void setCameraWidth(int v);
+    int cameraHeight() const { return settings->camera_height; }
+    void setCameraHeight(int v);
+    int cameraResolution() const;
+    void setCameraResolution(int v);
     double pitchOffsetFsaPnp() const;
     void setPitchOffsetFsaPnp(double v);
 
@@ -245,6 +254,7 @@ private:
     UGlobalHotkeys *m_hotkey = nullptr;
     QMessageBox *m_bindBox = nullptr;
     int m_waitForBind = -1;
+    bool m_cameraDirty = false;
 
     void startCameraPreview();
     void stopCameraPreview();

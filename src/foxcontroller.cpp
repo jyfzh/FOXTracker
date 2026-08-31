@@ -360,12 +360,25 @@ void FoxController::saveConfig()
         settings->port = port();
         settings->set_value<int>("port", settings->port);
     }
-    if (cameraId() != settings->camera_id || detectFps() != settings->fps) {
+    bool camDirty = false;
+    if (cameraId() != settings->camera_id) camDirty = true;
+    if (cameraWidth() != settings->camera_width || cameraHeight() != settings->camera_height) camDirty = true;
+    if (detectFps() != settings->fps) camDirty = true;
+    // The setters already updated settings, so the above checks are always false.
+    // Instead use a dirty flag set by the setters or compare against config file values.
+    // For now, rely on dirty flag `m_cameraDirty` set by camera setters.
+    if (m_cameraDirty) camDirty = true;
+    if (camDirty) {
         settings->camera_id = cameraId();
         settings->set_value<int>("camera_id", settings->camera_id);
+        settings->camera_width = cameraWidth();
+        settings->set_value<int>("camera_width", settings->camera_width);
+        settings->camera_height = cameraHeight();
+        settings->set_value<int>("camera_height", settings->camera_height);
         settings->fps = detectFps();
         settings->set_value<double>("fps", settings->fps);
         hd.reset();
+        m_cameraDirty = false;
     }
     settings->detect_duration = detectDuration();
     settings->set_value<int>("detect_duration", settings->detect_duration);
@@ -453,14 +466,34 @@ void FoxController::setDoubleAccela(bool v) { settings->double_accela = v; setti
 void FoxController::setUseFt(bool v) { settings->use_ft = settings->use_npclient = v; settings->set_value<bool>("use_ft", v); settings->set_value<bool>("use_npclient", v); emit settingsChanged(); }
 void FoxController::setSendPoseUdp(bool v) { settings->send_posedata_udp = v; settings->set_value<bool>("send_posedata_udp", v); emit settingsChanged(); }
 void FoxController::setPort(int v) { settings->port = v; settings->set_value<int>("port", v); emit settingsChanged(); }
-void FoxController::setDetectFps(double v) { settings->fps = v; settings->set_value<double>("fps", v); emit settingsChanged(); }
-void FoxController::setCameraId(int v) { settings->camera_id = v; settings->set_value<int>("camera_id", v); emit settingsChanged(); }
+void FoxController::setDetectFps(double v) { if (settings->fps==v) return; settings->fps = v; settings->set_value<double>("fps", v); m_cameraDirty = true; emit settingsChanged(); }
+void FoxController::setCameraId(int v) { if (settings->camera_id==v) return; settings->camera_id = v; settings->set_value<int>("camera_id", v); m_cameraDirty = true; emit settingsChanged(); }
 void FoxController::setDetectDuration(int v) { settings->detect_duration = v; settings->set_value<int>("detect_duration", v); emit settingsChanged(); }
 void FoxController::setUdpHost(const QString &v) { settings->udp_host = v.toStdString(); settings->set_value<std::string>("udp_host", settings->udp_host); emit settingsChanged(); }
 void FoxController::setLandmarkDetectMethod(int v) { settings->set_landmark_level(v); settings->set_value<int>("landmark_detect_method", v); emit settingsChanged(); }
 void FoxController::setEnableAutoExpo(bool v) { settings->enable_auto_expo = v; hd.set_auto_expo(v); settings->set_value<bool>("enable_auto_expo", v); emit settingsChanged(); }
 void FoxController::setCameraGain(double v) { settings->camera_gain = v; hd.set_gain(v); settings->set_value<double>("camera_gain", v); emit settingsChanged(); }
 void FoxController::setCameraExpo(double v) { settings->camera_expo = v; hd.set_expo(v); settings->set_value<double>("camera_expo", v); emit settingsChanged(); }
+void FoxController::setCameraWidth(int v) { if (settings->camera_width==v) return; settings->camera_width = v; settings->set_value<int>("camera_width", v); m_cameraDirty = true; emit settingsChanged(); }
+void FoxController::setCameraHeight(int v) { if (settings->camera_height==v) return; settings->camera_height = v; settings->set_value<int>("camera_height", v); m_cameraDirty = true; emit settingsChanged(); }
+int FoxController::cameraResolution() const {
+    struct Res {int w,h;};
+    static const Res modes[] = {{640,480},{320,240},{800,600},{1280,720},{1920,1080}};
+    for (int i=0;i<(int)(sizeof(modes)/sizeof(modes[0]));++i) if (modes[i].w==settings->camera_width && modes[i].h==settings->camera_height) return i;
+    return 0;
+}
+void FoxController::setCameraResolution(int idx) {
+    struct Res {int w,h;};
+    static const Res modes[] = {{640,480},{320,240},{800,600},{1280,720},{1920,1080}};
+    if (idx<0 || idx>=(int)(sizeof(modes)/sizeof(modes[0]))) return;
+    int w = modes[idx].w, h = modes[idx].h;
+    if (w==settings->camera_width && h==settings->camera_height) return;
+    settings->camera_width = w; settings->camera_height = h;
+    settings->set_value<int>("camera_width", w);
+    settings->set_value<int>("camera_height", h);
+    m_cameraDirty = true;
+    emit settingsChanged();
+}
 
 double FoxController::pitchOffsetFsaPnp() const
 {
