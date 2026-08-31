@@ -11,61 +11,60 @@
 #include <opencv2/core/eigen.hpp>
 #include <fstream>
 #include <QDebug>
-#include <FlightAgxSettings.h>
+#include "FlightAgxSettings.h"
 #include <queue>
 #include <mutex>
 #include <atomic>
-#include <fagx_datatype.h>
-#include <KalmanFilter.h>
-#include <inc/FSANet.h>
-#include "inc/FaceDetectors.h"
+#include "fagx_datatype.h"
+#include "KalmanFilter.h"
+#include "FSANet.h"
+#include "FaceDetectors.h"
 #include <opencv2/tracking.hpp>
 #include <opencv2/tracking/tracking_legacy.hpp>
-#include <PS3EYEDriver/src/ps3eye.h>
-#include <PS3EYEDriver/src/ps3eye_capi.h>
+#include "PS3EYEDriver/src/ps3eye.h"
+#include "PS3EYEDriver/src/ps3eye_capi.h"
 
 class HeadPoseDetector;
 
-struct HeadPoseDetectionResult {
+struct HeadPoseDetectionResult
+{
     bool success = false;
     std::vector<Pose> detected_poses;
 
-    //This is face surface ground speed
+    // This is face surface ground speed
     Eigen::Vector3d face_ground_speed;
 
-    HeadPoseDetectionResult(bool _success, std::vector<Pose> _poses, Eigen::Vector3d gspd):
-        success(_success), detected_poses(_poses), face_ground_speed(gspd)
+    HeadPoseDetectionResult(bool _success, std::vector<Pose> _poses, Eigen::Vector3d gspd) : success(_success), detected_poses(_poses), face_ground_speed(gspd)
     {
-
     }
 
-    HeadPoseDetectionResult():
-        success(false), detected_poses(0), face_ground_speed(0, 0, 0) {
-
+    HeadPoseDetectionResult() : success(false), detected_poses(0), face_ground_speed(0, 0, 0)
+    {
     }
 
-    HeadPoseDetectionResult(const HeadPoseDetectionResult & hd) {
+    HeadPoseDetectionResult(const HeadPoseDetectionResult &hd)
+    {
         success = hd.success;
         detected_poses = hd.detected_poses;
         face_ground_speed = hd.face_ground_speed;
     }
 };
 
-class HeadPoseDetector: public QObject {
+class HeadPoseDetector : public QObject
+{
     Q_OBJECT
 
-    FaceDetector * fd = nullptr;
-    LandmarkDetector * lmd = nullptr;
+    FaceDetector *fd = nullptr;
+    LandmarkDetector *lmd = nullptr;
 
-     ExtendKalmanFilter12DOF_13 ekf;
-//    ExtendKalmanFilter12DOF_19 ekf;
-    
+    ExtendKalmanFilter12DOF_13 ekf;
+    //    ExtendKalmanFilter12DOF_19 ekf;
 
     bool is_running = false;
 
     cv::VideoCapture cap;
 
-    ps3eye_t * ps3cam = nullptr;
+    ps3eye_t *ps3cam = nullptr;
 
     cv::Mat ps3_frame;
 
@@ -80,7 +79,7 @@ class HeadPoseDetector: public QObject {
     std::thread detect_thread;
 
     QThread mainThread;
-    QTimer * main_loop_timer = nullptr;
+    QTimer *main_loop_timer = nullptr;
 
     Eigen::Matrix3d Rface, Rcam;
 
@@ -106,20 +105,19 @@ class HeadPoseDetector: public QObject {
     double last_t = 0;
 
     bool paused = false;
-    //dQ of FSA and PnP result
+    // dQ of FSA and PnP result
     Eigen::Quaterniond dq;
 
     bool inited = false;
 
     Pose P0;
 
-
     FSANet fsanet;
 
-    std::pair<bool, Pose> solve_face_pose(CvPts landmarks, std::vector<cv::Point3f> landmarks_3d, std::vector<float> confs, cv::Mat & frame, Eigen::Vector3d fsa_ypr);
-    void draw(cv::Mat & frame, cv::Rect2d roi, cv::Rect2d face_roi, cv::Rect2d fsa_roi, CvPts landmarks, Pose p, cv::Point3f track_spd);
+    std::pair<bool, Pose> solve_face_pose(CvPts landmarks, std::vector<cv::Point3f> landmarks_3d, std::vector<float> confs, cv::Mat &frame, Eigen::Vector3d fsa_ypr);
+    void draw(cv::Mat &frame, cv::Rect2d roi, cv::Rect2d face_roi, cv::Rect2d fsa_roi, CvPts landmarks, Pose p, cv::Point3f track_spd);
 
-    //In camera frame
+    // In camera frame
     Eigen::Vector3d estimate_ground_speed_by_tracker(double z, cv::Rect2d roi, cv::Point3f track_spd);
 
     double t_last;
@@ -136,21 +134,20 @@ class HeadPoseDetector: public QObject {
 public:
     ~HeadPoseDetector();
 
-    HeadPoseDetector(): last_roi(0, 0, 0, 0) {
+    HeadPoseDetector() : last_roi(0, 0, 0, 0)
+    {
         cv::setNumThreads(1);
         is_running = false;
         fd = new FaceDetector;
         lmd = new LandmarkDetector();
 
-        Rface << 0,  1, 0,
-                    0,  0, -1, 
-                    -1, 0, 0;
+        Rface << 0, 1, 0,
+            0, 0, -1,
+            -1, 0, 0;
 
         Rcam << 0, 0, -1,
-                -1, 0, 0,
-                 0, 1, 0;
-
-
+            -1, 0, 0,
+            0, 1, 0;
 
         connect(this, SIGNAL(start()),
                 this, SLOT(start_slot()));
@@ -162,8 +159,8 @@ public:
         ps3eye_init();
     }
 
-    //When using FSANet. First is PnP pose, next is FSANet pose
-    HeadPoseDetectionResult detect_head_pose(cv::Mat frame, cv::Mat & _show, double t, double dt);
+    // When using FSANet. First is PnP pose, next is FSANet pose
+    HeadPoseDetectionResult detect_head_pose(cv::Mat frame, cv::Mat &_show, double t, double dt);
 
     void run_thread();
 
@@ -172,7 +169,8 @@ public:
     void pose_callback(double t, Pose pose);
 
 public:
-    cv::Mat get_preview_image() {
+    cv::Mat get_preview_image()
+    {
         std::lock_guard<std::mutex> lock(preview_mtx);
         cv::Mat ret;
         preview_image.copyTo(ret);
@@ -188,7 +186,6 @@ signals:
     void on_detect_twist(double t, Eigen::Vector3d w, Eigen::Vector3d v);
     void on_detect_P(double t, Matrix19d P);
 
-
 private slots:
     void loop();
     void start_slot();
@@ -201,14 +198,14 @@ public slots:
 
     void set_auto_expo(bool enable_auto_expo);
 
-    //0-1
+    // 0-1
     void set_gain(double gain);
 
-    //0-1
+    // 0-1
     void set_expo(double expo);
 
 public:
-    template<typename T>
+    template <typename T>
     void reduceVector(std::vector<T> &v, std::vector<uchar> status)
     {
         int j = 0;
@@ -217,8 +214,6 @@ public:
                 v[j++] = v[i];
         v.resize(j);
     }
-
 };
-
 
 #endif // HEADPOSEDETECTOR_H

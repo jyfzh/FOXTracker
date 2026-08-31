@@ -2,10 +2,11 @@
 #define POSEREMAPPER_H
 
 #include <QObject>
-#include "fagx_datatype.h"
-#include <filter_accela.h>
 #include <QDateTime>
 #include <QTimer>
+
+#include "fagx_datatype.h"
+#include "accela_filter/filter_accela.h"
 
 class PoseRemapper : public QObject
 {
@@ -16,7 +17,7 @@ class PoseRemapper : public QObject
     accela _accela, _accela2;
 
     Eigen::Matrix3d Rcam;
-    QTimer * pose_callback_timer;
+    QTimer *pose_callback_timer;
     bool has_pose_data = false;
     double t_last;
     Eigen::Vector3d eul_last, T_last;

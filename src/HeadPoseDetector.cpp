@@ -5,65 +5,75 @@
 #include <opencv2/aruco.hpp>
 #include <QTimer>
 #include <QMessageBox>
-#include <stereo_bundle_adjustment.h>
+#include "stereo_bundle_adjustment.h"
+
 using namespace cv;
 using namespace std;
 
 #include <QMutex>
 #include <QHash>
 
-namespace {
-// Per-callsite throttle: returns true at most once per `intervalMs` for a
-// given call-site id. Used to gate high-frequency diagnostic qDebug() calls
-// (e.g. detection failures that otherwise fire every frame/loop) so they
-// cannot flood the GUI log and stall the UI over long runs.
-bool throttledLog(const char* id, qint64 intervalMs)
+namespace
 {
-    static QMutex mtx;
-    static QHash<QByteArray, qint64> last;
-    qint64 now = QDateTime::currentMSecsSinceEpoch();
-    QMutexLocker lock(&mtx);
-    auto it = last.find(id);
-    if (it != last.end() && now - it.value() < intervalMs)
-        return false;
-    last[id] = now;
-    return true;
-}
+    // Per-callsite throttle: returns true at most once per `intervalMs` for a
+    // given call-site id. Used to gate high-frequency diagnostic qDebug() calls
+    // (e.g. detection failures that otherwise fire every frame/loop) so they
+    // cannot flood the GUI log and stall the UI over long runs.
+    bool throttledLog(const char *id, qint64 intervalMs)
+    {
+        static QMutex mtx;
+        static QHash<QByteArray, qint64> last;
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        QMutexLocker lock(&mtx);
+        auto it = last.find(id);
+        if (it != last.end() && now - it.value() < intervalMs)
+            return false;
+        last[id] = now;
+        return true;
+    }
 }
 
-cv::Ptr<cv::legacy::Tracker> create_tracker() {
+cv::Ptr<cv::legacy::Tracker> create_tracker()
+{
     return cv::legacy::TrackerMedianFlow::create();
-    //return cv::legacy::TrackerMOSSE::create();
+    // return cv::legacy::TrackerMOSSE::create();
 }
 
-
-void HeadPoseDetector::loop() {
-    if (paused) {
+void HeadPoseDetector::loop()
+{
+    if (paused)
+    {
         return;
     }
 
     TicToc tic_cap;
     Mat frame;
-    if (ps3cam != nullptr) {
-        if (ps3_frame.empty()) {
+    if (ps3cam != nullptr)
+    {
+        if (ps3_frame.empty())
+        {
             ps3_frame = cv::Mat(480, 640, CV_8UC3);
         }
         ps3eye_grab_frame(ps3cam, ps3_frame.data);
         frame = ps3_frame;
-    } else {
+    }
+    else
+    {
         cap >> frame;
     }
 
-
-    if( frame.empty() ) {
-        if (throttledLog("empty_frame", 2000)) qDebug() << "Empty frame";
+    if (frame.empty())
+    {
+        if (throttledLog("empty_frame", 2000))
+            qDebug() << "Empty frame";
         return;
     }
-    double t = QDateTime::currentMSecsSinceEpoch()/1000.0 - t0;
+    double t = QDateTime::currentMSecsSinceEpoch() / 1000.0 - t0;
     t_last = t;
     dt = t - last_t;
     last_t = t;
-    if (dt <= 0 || dt > 1.0) dt = 0.03;
+    if (dt <= 0 || dt > 1.0)
+        dt = 0.03;
     TicToc tic;
     cv::Mat _show;
     auto ret = detect_head_pose(frame, _show, t, dt);
@@ -71,28 +81,37 @@ void HeadPoseDetector::loop() {
     Pose pose;
     Pose pose_raw;
 
-    if (ret.success) {
-        if (poses_raw.size() == 1 || settings->landmark_detect_method >= 0) {
+    if (ret.success)
+    {
+        if (poses_raw.size() == 1 || settings->landmark_detect_method >= 0)
+        {
             pose_raw = poses_raw[0];
-        } else {
+        }
+        else
+        {
             pose_raw = (poses_raw[1].slerp(settings->fsa_pnp_mixture_rate, poses_raw[0]));
         }
 
         TicToc tic;
-        if(settings->use_ekf) {
+        if (settings->use_ekf)
+        {
             pose = ekf.update_raw_pose_data(t, poses_raw[0], 0);
-            if (poses_raw.size() > 1) {
+            if (poses_raw.size() > 1)
+            {
                 pose = ekf.update_raw_pose_data(t, poses_raw[1], 1);
             }
 
-            if (settings->enable_face_spd_est) {
+            if (settings->enable_face_spd_est)
+            {
                 pose = ekf.update_ground_speed(t, ret.face_ground_speed);
             }
-
-        } else {
+        }
+        else
+        {
             pose = pose_raw;
         }
-        if (!inited) {
+        if (!inited)
+        {
             P0 = pose;
             inited = true;
         }
@@ -100,8 +119,9 @@ void HeadPoseDetector::loop() {
 
     // auto q0_inv = P0.att().inverse();
     auto q0_inv = Eigen::Quaterniond::Identity();
-    if (ret.success) {
-        this->on_detect_pose6d_raw(t, make_pair(R2ypr(q0_inv*pose_raw.R()), q0_inv*pose_raw.pos()));
+    if (ret.success)
+    {
+        this->on_detect_pose6d_raw(t, make_pair(R2ypr(q0_inv * pose_raw.R()), q0_inv * pose_raw.pos()));
     }
 
     pose_last = pose;
@@ -113,23 +133,26 @@ void HeadPoseDetector::loop() {
     //     << spd(0) << "," << spd(1)  << "," << spd(2) << "," << _T(0) << "," << _T(1) << "," << _T(2) << ","
     //     << T(0) << "," << T(1) << "," << T(2) << std::endl;
     pose_callback(t, pose);
-    if (settings->enable_preview) {
+    if (settings->enable_preview)
+    {
         std::lock_guard<std::mutex> lock(preview_mtx);
         _show.copyTo(preview_image);
     }
 }
 
-
-void HeadPoseDetector::pose_callback(double t, Pose pose) {
-    if (!inited) {
+void HeadPoseDetector::pose_callback(double t, Pose pose)
+{
+    if (!inited)
+    {
         return;
     }
 
     auto q0_inv = Eigen::Quaterniond::Identity();
 
-    if(settings->use_ekf) {
+    if (settings->use_ekf)
+    {
         pose = ekf.predict(t);
-    } 
+    }
 
     auto R = pose.R();
     auto q = pose.att();
@@ -137,12 +160,13 @@ void HeadPoseDetector::pose_callback(double t, Pose pose) {
     auto l = fabs(settings->cervical_face_model_x);
     auto ly = fabs(settings->cervical_face_model_y);
 
-    //This pose is in world frame
-    if (last_succ || (settings->use_ekf && inited)) {
-        this->on_detect_pose(t_last, make_pair(R*Rface, T));
+    // This pose is in world frame
+    if (last_succ || (settings->use_ekf && inited))
+    {
+        this->on_detect_pose(t_last, make_pair(R * Rface, T));
 
-        auto eul = quat2eulers(q0_inv*q);
-        Eigen::Vector3d Tq = q0_inv*T;
+        auto eul = quat2eulers(q0_inv * q);
+        Eigen::Vector3d Tq = q0_inv * T;
         this->on_detect_pose6d(t_last, make_pair(eul, Tq));
 
         // Angular/linear velocity for the chart "Rate" series. Prefer the EKF's
@@ -150,17 +174,23 @@ void HeadPoseDetector::pose_callback(double t, Pose pose) {
         // the rate curve is populated even with use_ekf disabled.
         Eigen::Vector3d w = Eigen::Vector3d::Zero();
         Eigen::Vector3d v = Eigen::Vector3d::Zero();
-        if (settings->use_ekf) {
+        if (settings->use_ekf)
+        {
             w = q0_inv * ekf.get_angular_velocity();
             v = q0_inv * ekf.get_linear_velocity();
-        } else if (twist_inited && dt > 1e-4) {
+        }
+        else if (twist_inited && dt > 1e-4)
+        {
             Eigen::Vector3d de = eul - prev_eul_twist;
-            for (int i = 0; i < 3; ++i) {
-                while (de[i] > 180.0) de[i] -= 360.0;
-                while (de[i] < -180.0) de[i] += 360.0;
+            for (int i = 0; i < 3; ++i)
+            {
+                while (de[i] > 180.0)
+                    de[i] -= 360.0;
+                while (de[i] < -180.0)
+                    de[i] += 360.0;
             }
-            w = de * (0.017453292519943295) / dt;     // deg/s -> rad/s
-            v = (Tq - prev_T_twist) / dt;     // m/s
+            w = de * (0.017453292519943295) / dt; // deg/s -> rad/s
+            v = (Tq - prev_T_twist) / dt;         // m/s
         }
         this->on_detect_twist(t_last, w, v);
         prev_eul_twist = eul;
@@ -169,74 +199,89 @@ void HeadPoseDetector::pose_callback(double t, Pose pose) {
     }
 }
 
-void HeadPoseDetector::run_detect_thread() {
+void HeadPoseDetector::run_detect_thread()
+{
     detect_loop_count++;
-    while(is_running) {
-        if (frame_pending_detect) {
-           TicToc tic;
-           detect_frame_mtx.lock();
-           cv::Mat _frame = frame_need_to_detect.clone();
-           cv::Rect2d roi_need = roi_need_to_detect;
-           detect_frame_mtx.unlock();
-           cv::Rect2d roi = fd->detect(_frame, roi_need);
+    while (is_running)
+    {
+        if (frame_pending_detect)
+        {
+            TicToc tic;
+            detect_frame_mtx.lock();
+            cv::Mat _frame = frame_need_to_detect.clone();
+            cv::Rect2d roi_need = roi_need_to_detect;
+            detect_frame_mtx.unlock();
+            cv::Rect2d roi = fd->detect(_frame, roi_need);
 
-           if (detect_loop_count%10 == 0) {
-           qDebug() << "Frontal face detector cost" << tic.toc() << "ms";
-           }
-           //Track to now image
+            if (detect_loop_count % 10 == 0)
+            {
+                qDebug() << "Frontal face detector cost" << tic.toc() << "ms";
+            }
+            // Track to now image
 
-           if (roi.area() < MIN_ROI_AREA) {
-               frame_pending_detect = false;
-               detect_frame_mtx.lock();
-               roi_need_to_detect = cv::Rect2d(0, 0, _frame.cols, _frame.rows);
-               detect_frame_mtx.unlock();
-               if (throttledLog("detect_failed_thread", 2000)) qDebug() << "Detect failed in thread";
-               QThread::msleep(10);
-               continue;
-           }
+            if (roi.area() < MIN_ROI_AREA)
+            {
+                frame_pending_detect = false;
+                detect_frame_mtx.lock();
+                roi_need_to_detect = cv::Rect2d(0, 0, _frame.cols, _frame.rows);
+                detect_frame_mtx.unlock();
+                if (throttledLog("detect_failed_thread", 2000))
+                    qDebug() << "Detect failed in thread";
+                QThread::msleep(10);
+                continue;
+            }
 
-           detect_mtx.lock();
-           tracker.release();
-           tracker = create_tracker();
-           tracker->init(_frame, roi);
-           bool success_track = true;
-           TicToc tic_retrack;
-           for (auto & frame : frames) {
-               bool success = tracker->update(frame, roi);
-                if (!success) {
+            detect_mtx.lock();
+            tracker.release();
+            tracker = create_tracker();
+            tracker->init(_frame, roi);
+            bool success_track = true;
+            TicToc tic_retrack;
+            for (auto &frame : frames)
+            {
+                bool success = tracker->update(frame, roi);
+                if (!success)
+                {
                     success_track = false;
                     break;
                 }
-           }
-           int frame_size = frames.size();
-           frames.clear();
-           if(!success_track) {
-               if (throttledLog("tracker_failed_queue", 2000)) qDebug() << "Tracker failed in detect thread queue size" << frame_size;
-               frame_pending_detect = false;
-               detect_mtx.unlock();
-               continue;
-           }
-           last_roi = roi;
-           frame_pending_detect = false;
-           detect_mtx.unlock();
-
-        } else {
+            }
+            int frame_size = frames.size();
+            frames.clear();
+            if (!success_track)
+            {
+                if (throttledLog("tracker_failed_queue", 2000))
+                    qDebug() << "Tracker failed in detect thread queue size" << frame_size;
+                frame_pending_detect = false;
+                detect_mtx.unlock();
+                continue;
+            }
+            last_roi = roi;
+            frame_pending_detect = false;
+            detect_mtx.unlock();
+        }
+        else
+        {
             QThread::msleep(10);
         }
     }
 }
 
-
-HeadPoseDetector::~HeadPoseDetector() {
+HeadPoseDetector::~HeadPoseDetector()
+{
     // Stop detection synchronously inside the worker thread (mainThread) so
     // timers/camera are released there, then stop the event loop and join the
     // thread. Without this, the member QThread `mainThread` would be destroyed
     // while still running, which triggers qFatal
     // ("QThread: Destroyed while thread is still running") -> 0xc0000409 on exit.
-    if (mainThread.isRunning()) {
-        if (QThread::currentThread() == &mainThread) {
+    if (mainThread.isRunning())
+    {
+        if (QThread::currentThread() == &mainThread)
+        {
             stop_slot();
-        } else {
+        }
+        else
+        {
             QMetaObject::invokeMethod(this, "stop_slot", Qt::BlockingQueuedConnection);
         }
         mainThread.quit();
@@ -245,33 +290,40 @@ HeadPoseDetector::~HeadPoseDetector() {
     ps3eye_uninit();
 }
 
-void HeadPoseDetector::start_slot() {
-    t0 = QDateTime::currentMSecsSinceEpoch()/1000.0;
-    if (is_running) {
+void HeadPoseDetector::start_slot()
+{
+    t0 = QDateTime::currentMSecsSinceEpoch() / 1000.0;
+    if (is_running)
+    {
         return;
     }
 
     is_running = true;
 
-    if(settings->enable_multithread_detect) {
-        detect_thread = std::thread([&]{
-            this->run_detect_thread();
-        });
+    if (settings->enable_multithread_detect)
+    {
+        detect_thread = std::thread([&]
+                                    { this->run_detect_thread(); });
     }
 
     this->run_thread();
 }
 
-void HeadPoseDetector::run_thread() {
+void HeadPoseDetector::run_thread()
+{
     qDebug("%d PS3 EYE connected.", ps3eye_count_connected());
-    if (ps3eye_count_connected() > 0) {
+    if (ps3eye_count_connected() > 0)
+    {
         ps3cam = ps3eye_open(settings->camera_id, 640, 480, settings->fps, PS3EYE_FORMAT_BGR);
         set_auto_expo(settings->enable_auto_expo);
         set_gain(settings->camera_gain);
         set_expo(settings->camera_expo);
-    } else {
-        if(!cap.open(settings->camera_id)) {
-            qDebug() << "Not able to open camera" << settings->camera_id <<  "exiting";
+    }
+    else
+    {
+        if (!cap.open(settings->camera_id))
+        {
+            qDebug() << "Not able to open camera" << settings->camera_id << "exiting";
             {
                 std::lock_guard<std::mutex> lock(preview_mtx);
                 preview_image = cv::Mat(480, 640, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -280,7 +332,8 @@ void HeadPoseDetector::run_thread() {
                 cv::putText(preview_image, warn, cv::Point2f(20, 240), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
             }
             is_running = false;
-            if (detect_thread.joinable()) {
+            if (detect_thread.joinable())
+            {
                 detect_thread.join();
             }
             return;
@@ -290,82 +343,93 @@ void HeadPoseDetector::run_thread() {
         cap.set(cv::CAP_PROP_FPS, settings->fps);
     }
 
-    qDebug() << "Start Timer with fps of" << settings->fps + 10 << "Cap FPS"<< cap.get(cv::CAP_PROP_FPS);
-    if (main_loop_timer == nullptr) {
+    qDebug() << "Start Timer with fps of" << settings->fps + 10 << "Cap FPS" << cap.get(cv::CAP_PROP_FPS);
+    if (main_loop_timer == nullptr)
+    {
         main_loop_timer = new QTimer;
         main_loop_timer->moveToThread(&mainThread);
         connect(main_loop_timer, SIGNAL(timeout()), this, SLOT(loop()));
     }
-    main_loop_timer->start(1.0/(settings->fps + 10)*1000);
-
-
+    main_loop_timer->start(1.0 / (settings->fps + 10) * 1000);
 }
 
-
-void HeadPoseDetector::set_gain(double gain) {
-    if (ps3cam != nullptr) {
-        ps3eye_set_parameter(ps3cam, PS3EYE_GAIN, (int)(gain*63));
+void HeadPoseDetector::set_gain(double gain)
+{
+    if (ps3cam != nullptr)
+    {
+        ps3eye_set_parameter(ps3cam, PS3EYE_GAIN, (int)(gain * 63));
     }
 }
 
-void HeadPoseDetector::set_expo(double expo) {
-    if (ps3cam != nullptr) {
-        ps3eye_set_parameter(ps3cam, PS3EYE_EXPOSURE, (int)(expo*255));
+void HeadPoseDetector::set_expo(double expo)
+{
+    if (ps3cam != nullptr)
+    {
+        ps3eye_set_parameter(ps3cam, PS3EYE_EXPOSURE, (int)(expo * 255));
     }
 }
 
-
-void HeadPoseDetector::set_auto_expo(bool enable_auto_expo) {
-    if (ps3cam != nullptr) {
+void HeadPoseDetector::set_auto_expo(bool enable_auto_expo)
+{
+    if (ps3cam != nullptr)
+    {
         ps3eye_set_parameter(ps3cam, PS3EYE_AUTO_GAIN, enable_auto_expo);
     }
 }
 
-void HeadPoseDetector::stop_slot() {
-    if (is_running) {
+void HeadPoseDetector::stop_slot()
+{
+    if (is_running)
+    {
         qDebug() << "Stop...";
         last_landmark_pts.clear();
         is_running = false;
         paused = false;
-        if (detect_thread.joinable()) {
+        if (detect_thread.joinable())
+        {
             detect_thread.join();
         }
         main_loop_timer->stop();
         delete main_loop_timer;
         main_loop_timer = nullptr;
         ekf.reset();
-        //wait a frame
+        // wait a frame
         QThread::msleep(30);
 
-        if(cap.isOpened()) {
+        if (cap.isOpened())
+        {
             cap.release();
         }
 
-        if(ps3cam != nullptr) {
+        if (ps3cam != nullptr)
+        {
             ps3eye_close(ps3cam);
         }
     }
 }
 
-void HeadPoseDetector::pause() {
+void HeadPoseDetector::pause()
+{
     paused = !paused;
 }
 
-void HeadPoseDetector::reset() {
+void HeadPoseDetector::reset()
+{
     first_solve_pose = true;
     stop();
     start();
 }
 
-void HeadPoseDetector::reset_detect() {
+void HeadPoseDetector::reset_detect()
+{
     last_roi = cv::Rect2d(0, 0, 0, 0);
     roi_need_to_detect = cv::Rect2d(0, 0, 0, 0);
-    first_solve_pose  = true;
+    first_solve_pose = true;
     fsa_roi_last = cv::Rect2d(0, 0, 0, 0);
 }
 
-
-HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Mat & _show, double t, double dt) {
+HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Mat &_show, double t, double dt)
+{
     TicToc tic;
     Eigen::Matrix3d R;
     Eigen::Vector3d T;
@@ -380,26 +444,34 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
 
     HeadPoseDetectionResult ret;
 
-    frame_count ++;
-    if (first_solve_pose) {
+    frame_count++;
+    if (first_solve_pose)
+    {
         std::lock_guard<std::mutex> lock(detect_mtx);
         roi = fd->detect(frame, last_roi);
         last_roi = roi;
-        if (roi.area() > MIN_ROI_AREA) {
+        if (roi.area() > MIN_ROI_AREA)
+        {
             tracker = create_tracker();
             tracker->init(frame, roi);
-        } else {
-            if (settings->enable_preview) {
+        }
+        else
+        {
+            if (settings->enable_preview)
+            {
                 _show = frame.clone();
                 draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
             }
             return ret;
         }
-
-    } else {
+    }
+    else
+    {
         bool new_add_pending_detect = false;
-        if (frame_count % settings->detect_duration == 0) {
-            if (!frame_pending_detect) {
+        if (frame_count % settings->detect_duration == 0)
+        {
+            if (!frame_pending_detect)
+            {
                 frame_pending_detect = true;
                 detect_frame_mtx.lock();
                 frame.copyTo(frame_need_to_detect);
@@ -411,11 +483,13 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
         }
 
         detect_mtx.lock();
-        if (!new_add_pending_detect && frame_pending_detect) {
-            //We add frames to help tracker
+        if (!new_add_pending_detect && frame_pending_detect)
+        {
+            // We add frames to help tracker
             frames.push_back(frame.clone());
-            while(frames.size() > settings->retrack_queue_size) {
-                    frames.erase(frames.begin());
+            while (frames.size() > settings->retrack_queue_size)
+            {
+                frames.erase(frames.begin());
             }
         }
 
@@ -423,19 +497,24 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
         TicToc tic;
 
         bool success = tracker->update(frame, roi);
-        if (success) {
-            track_spd.x = (roi.x + roi.width/2 - last_roi.x - last_roi.width/2)/dt;
-            track_spd.y = (roi.y + roi.height/2 - last_roi.y - last_roi.height/2)/dt;
-            track_spd.z = (1/roi.area() - 1/last_roi.area());
+        if (success)
+        {
+            track_spd.x = (roi.x + roi.width / 2 - last_roi.x - last_roi.width / 2) / dt;
+            track_spd.y = (roi.y + roi.height / 2 - last_roi.y - last_roi.height / 2) / dt;
+            track_spd.z = (1 / roi.area() - 1 / last_roi.area());
         }
 
-        if (!success && !frame_pending_detect) {
-            if (throttledLog("will_detect_main", 2000)) qDebug() << "Will detect in main thread";
+        if (!success && !frame_pending_detect)
+        {
+            if (throttledLog("will_detect_main", 2000))
+                qDebug() << "Will detect in main thread";
             TicToc tic;
             roi = fd->detect(frame, cv::Rect2d());
-            if (throttledLog("tracker_failed_main", 2000)) qDebug()<< "Tracker failed; Turn to detection" << tic.toc() << "ms";
+            if (throttledLog("tracker_failed_main", 2000))
+                qDebug() << "Tracker failed; Turn to detection" << tic.toc() << "ms";
 
-            if (roi.area() > MIN_ROI_AREA) {
+            if (roi.area() > MIN_ROI_AREA)
+            {
                 last_roi = roi;
                 tracker.release();
                 tracker = create_tracker();
@@ -444,28 +523,34 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
             }
         }
 
-        if (success) {
+        if (success)
+        {
             last_roi = roi;
             detect_mtx.unlock();
-            if (new_add_pending_detect) {
+            if (new_add_pending_detect)
+            {
                 detect_frame_mtx.lock();
-                roi_need_to_detect  = roi;
+                roi_need_to_detect = roi;
                 detect_frame_mtx.unlock();
             }
-        } else {
-            //std::cout << "Will unlock" << std::endl;
+        }
+        else
+        {
+            // std::cout << "Will unlock" << std::endl;
             detect_mtx.unlock();
-            if (settings->enable_preview) {
+            if (settings->enable_preview)
+            {
                 _show = frame.clone();
                 draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
             }
             return ret;
         }
-
     }
 
-    if (roi.area() < MIN_ROI_AREA) {
-        if (settings->enable_preview) {
+    if (roi.area() < MIN_ROI_AREA)
+    {
+        if (settings->enable_preview)
+        {
             _show = frame.clone();
             draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
         }
@@ -475,28 +560,36 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     double detect_track_time = tic.toc();
     face_roi = roi;
     fsa_roi = crop_roi(roi, frame, 0.2);
-    if (fsa_roi_last.area() < MIN_ROI_AREA) {
+    if (fsa_roi_last.area() < MIN_ROI_AREA)
+    {
         fsa_roi_last = fsa_roi;
-    } else {
+    }
+    else
+    {
         fsa_roi = fsa_roi_last = mixture_roi(fsa_roi_last, fsa_roi, settings->roi_filter_rate);
     }
 
-    //Use FSA To Detect Rotation
+    // Use FSA To Detect Rotation
     TicToc fsa;
-    if(settings->use_fsa && settings->landmark_detect_method < 0) {
+    if (settings->use_fsa && settings->landmark_detect_method < 0)
+    {
 
-        if (fsa_roi.area() > MIN_ROI_AREA) {
+        if (fsa_roi.area() > MIN_ROI_AREA)
+        {
             auto fsa_ypr_raw = fsanet.inference(frame(fsa_roi));
             fsa_ypr = fsa_ypr_raw - eul_by_crop(roi);
-            if (settings->landmark_detect_method < 0) {
-                if (fsa_ypr_raw(0) > 0) {
-                    face_roi.x = face_roi.x - fsa_ypr_raw(0)*face_roi.width*0.3;
+            if (settings->landmark_detect_method < 0)
+            {
+                if (fsa_ypr_raw(0) > 0)
+                {
+                    face_roi.x = face_roi.x - fsa_ypr_raw(0) * face_roi.width * 0.3;
                 }
 
-                face_roi.width = face_roi.width + fabs(fsa_ypr_raw(0))*face_roi.width*0.3;
+                face_roi.width = face_roi.width + fabs(fsa_ypr_raw(0)) * face_roi.width * 0.3;
 
-                if (fsa_ypr_raw(1) < 0) {
-                    face_roi.height = face_roi.height - fabs(fsa_ypr_raw(1))*face_roi.height*0.1;
+                if (fsa_ypr_raw(1) < 0)
+                {
+                    face_roi.height = face_roi.height - fabs(fsa_ypr_raw(1)) * face_roi.height * 0.1;
                 }
             }
         }
@@ -511,26 +604,32 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     {
         double x1 = std::clamp(face_roi.x, 0.0, (double)frame.cols - 1);
         double y1 = std::clamp(face_roi.y, 0.0, (double)frame.rows - 1);
-        double x2 = std::clamp(face_roi.x + face_roi.width,  0.0, (double)frame.cols);
+        double x2 = std::clamp(face_roi.x + face_roi.width, 0.0, (double)frame.cols);
         double y2 = std::clamp(face_roi.y + face_roi.height, 0.0, (double)frame.rows);
         face_roi = cv::Rect2d(x1, y1, x2 - x1, y2 - y1);
     }
 
     TicToc tic1;
     Landmarks lmd_ret;
-    if (settings->landmark_detect_method < 0) {
+    if (settings->landmark_detect_method < 0)
+    {
         lmd_ret = lmd->detect(frame, face_roi);
         landmarks = lmd_ret.landmarks2d;
         landmarks_3d = lmd_ret.landmarks3d;
-    } else {
+    }
+    else
+    {
         lmd_ret = lmd->detect(frame, fsa_roi);
         landmarks = lmd_ret.landmarks2d;
         landmarks_3d = lmd_ret.landmarks3d;
     }
 
-    if (landmarks.size() != landmarks_3d.size()) {
-        if (throttledLog("lmd_failed", 2000)) qDebug("Landmark detection failed. 2D pts %d 3D pts %d", (int)landmarks.size(), (int)landmarks_3d.size());
-        if (settings->enable_preview) {
+    if (landmarks.size() != landmarks_3d.size())
+    {
+        if (throttledLog("lmd_failed", 2000))
+            qDebug("Landmark detection failed. 2D pts %d 3D pts %d", (int)landmarks.size(), (int)landmarks_3d.size());
+        if (settings->enable_preview)
+        {
             _show = frame.clone();
             draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
         }
@@ -538,44 +637,46 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     }
 
     if (frame_count % ((int)settings->fps) == 0)
-        qDebug() << "Detect track" << detect_track_time <<  "Landmark detector cost " << tic1.toc() << "FSA " << dt_fsa;
+        qDebug() << "Detect track" << detect_track_time << "Landmark detector cost " << tic1.toc() << "FSA " << dt_fsa;
 
     TicToc ticpnp;
     auto _ret = this->solve_face_pose(landmarks, landmarks_3d, lmd_ret.confs, frame, fsa_ypr);
 
-    //Estimate Planar speed of face with tracker
+    // Estimate Planar speed of face with tracker
     ret.face_ground_speed = estimate_ground_speed_by_tracker(_ret.second.pos().z(), roi, track_spd);
 
-    if (_ret.first) {
+    if (_ret.first)
+    {
         auto pose = _ret.second;
         T = pose.pos();
         R = pose.att().toRotationMatrix();
 
-        //Pose 0 is PnP pose
-        //Pose 1 is FSA Pose
+        // Pose 0 is PnP pose
+        // Pose 1 is FSA Pose
         double offset = settings->pitch_offset_fsa_pnp;
-        if(settings->landmark_detect_method < 0) {
+        if (settings->landmark_detect_method < 0)
+        {
             // offset = 0;
         }
 
-        //pose.att() = pose.att() * Eigen::AngleAxisd(-offset, Eigen::Vector3d::UnitX());
+        // pose.att() = pose.att() * Eigen::AngleAxisd(-offset, Eigen::Vector3d::UnitX());
 
         ret.detected_poses.push_back(pose);
         ret.success = true;
 
-        //Use FSA YPR Here
-        if (settings->use_fsa && settings->landmark_detect_method < 0) {
-             R = Rcam.transpose() * Eigen::AngleAxisd(fsa_ypr(0), Eigen::Vector3d::UnitZ())
-                * Eigen::AngleAxisd(fsa_ypr(1) + offset, Eigen::Vector3d::UnitY())
-                * Eigen::AngleAxisd(-fsa_ypr(2), Eigen::Vector3d::UnitX())*Rface.transpose();
+        // Use FSA YPR Here
+        if (settings->use_fsa && settings->landmark_detect_method < 0)
+        {
+            R = Rcam.transpose() * Eigen::AngleAxisd(fsa_ypr(0), Eigen::Vector3d::UnitZ()) * Eigen::AngleAxisd(fsa_ypr(1) + offset, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(-fsa_ypr(2), Eigen::Vector3d::UnitX()) * Rface.transpose();
             Eigen::Quaterniond qR(R);
             ret.detected_poses.push_back(Pose(T, qR));
 
-            //The mismatch here is a bug of the new model
-            dq = pose.att()*qR.inverse();
+            // The mismatch here is a bug of the new model
+            dq = pose.att() * qR.inverse();
         }
 
-        if (settings->enable_preview) {
+        if (settings->enable_preview)
+        {
             _show = frame.clone();
             draw(_show, roi, face_roi, fsa_roi, landmarks, Pose(T, R), track_spd);
         }
@@ -587,9 +688,10 @@ HeadPoseDetectionResult HeadPoseDetector::detect_head_pose(cv::Mat frame, cv::Ma
     return ret;
 }
 
-Eigen::Vector3d HeadPoseDetector::estimate_ground_speed_by_tracker(double z, cv::Rect2d roi, cv::Point3f track_spd) {
-    double roi_x = roi.x + roi.width/2;
-    double roi_y = roi.y + roi.height/2;
+Eigen::Vector3d HeadPoseDetector::estimate_ground_speed_by_tracker(double z, cv::Rect2d roi, cv::Point3f track_spd)
+{
+    double roi_x = roi.x + roi.width / 2;
+    double roi_y = roi.y + roi.height / 2;
 
     double roi_x_new = roi_x + track_spd.x * dt;
     double roi_y_new = roi_y + track_spd.y * dt;
@@ -597,65 +699,70 @@ Eigen::Vector3d HeadPoseDetector::estimate_ground_speed_by_tracker(double z, cv:
     std::vector<cv::Point2f> pts{cv::Point2f(roi_x_new, roi_y_new)};
     std::vector<cv::Point2f> pts_un;
     cv::undistortPoints(pts, pts_un, settings->K, settings->D);
-    Eigen::Vector3d point_new_3d(pts_un[0].x*z, pts_un[0].y*z, z);
-    
+    Eigen::Vector3d point_new_3d(pts_un[0].x * z, pts_un[0].y * z, z);
+
     std::vector<cv::Point2f> pts_roi{cv::Point2f(roi_x, roi_y)};
     std::vector<cv::Point2f> pts_roi_un;
     cv::undistortPoints(pts_roi, pts_roi_un, settings->K, settings->D);
 
-    Eigen::Vector3d point_3d(pts_roi_un[0].x*z, pts_roi_un[0].y*z, z);
+    Eigen::Vector3d point_3d(pts_roi_un[0].x * z, pts_roi_un[0].y * z, z);
 
     // We can use this velocity to recgonize the deadzone. Thus, lock the attitude
-    Eigen::Vector3d gspd = (point_new_3d - point_3d)/dt;
+    Eigen::Vector3d gspd = (point_new_3d - point_3d) / dt;
 
     return gspd;
 }
 
+void HeadPoseDetector::draw(cv::Mat &frame, cv::Rect2d roi, cv::Rect2d face_roi, cv::Rect2d fsa_roi, CvPts landmarks, Pose p, cv::Point3f track_spd)
+{
+    // Head or face ROI
+    // cv::rectangle(frame, roi, cv::Scalar(255, 0, 0), 2);
 
-void HeadPoseDetector::draw(cv::Mat & frame, cv::Rect2d roi, cv::Rect2d face_roi, cv::Rect2d fsa_roi, CvPts landmarks, Pose p, cv::Point3f track_spd) {
-    //Head or face ROI
-    //cv::rectangle(frame, roi, cv::Scalar(255, 0, 0), 2);
-
-    //FSANet ROI
-    if (settings->use_fsa) {
+    // FSANet ROI
+    if (settings->use_fsa)
+    {
         cv::rectangle(frame, fsa_roi, cv::Scalar(255, 255, 255), 2);
-        //cv::rectangle(frame, face_roi, cv::Scalar(0, 255, 0), 2);
+        // cv::rectangle(frame, face_roi, cv::Scalar(0, 255, 0), 2);
     }
 
-    for (auto pt: landmarks) {
+    for (auto pt : landmarks)
+    {
         cv::circle(frame, pt, 1, cv::Scalar(0, 255, 0), -1);
     }
 
     cv::Mat tvec, Rmat, rvec;
-    Eigen::Matrix3d _R = p.R()*Rface.transpose();
+    Eigen::Matrix3d _R = p.R() * Rface.transpose();
     cv::eigen2cv(p.pos(), tvec);
     cv::eigen2cv(_R, Rmat);
     cv::Rodrigues(Rmat, rvec);
     cv::drawFrameAxes(frame, settings->K, cv::Mat(), rvec, -tvec, 0.05, 3);
 
-    if (settings->enable_face_spd_est) {
-        cv::Point2f center(face_roi.x + face_roi.width/2, face_roi.y + face_roi.height/2);
-        cv::arrowedLine(frame,  center, center+cv::Point2f(track_spd.x, track_spd.y), cv::Scalar(0, 127, 255), 3);
+    if (settings->enable_face_spd_est)
+    {
+        cv::Point2f center(face_roi.x + face_roi.width / 2, face_roi.y + face_roi.height / 2);
+        cv::arrowedLine(frame, center, center + cv::Point2f(track_spd.x, track_spd.y), cv::Scalar(0, 127, 255), 3);
     }
 
     //    char info[100] = {0};
     //    auto eul = quat2eulers(dq, true);
     //    sprintf(info, "dYPR [%3.1f,%3.1f,%3.1f]", eul(0), eul(1), eul(2));
     //    cv::putText(frame, info, cv::Point2f(20, 150), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 0, 0), 1);
-
 }
 
-std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::vector<cv::Point3f> landmarks_3d, std::vector<float> confs, cv::Mat & frame, Eigen::Vector3d fsa_ypr) {
+std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::vector<cv::Point3f> landmarks_3d, std::vector<float> confs, cv::Mat &frame, Eigen::Vector3d fsa_ypr)
+{
     Eigen::Vector3d T = Eigen::Vector3d::Zero();
     Eigen::Matrix3d R = Eigen::Matrix3d::Identity();
-    std::vector<int> indices{ 0,1,15,16,27,28,29,30,31,32,33,34,35,36,39,42,45 };
+    std::vector<int> indices{0, 1, 15, 16, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 39, 42, 45};
 
     std::vector<uchar> pts_mask(landmarks_3d.size());
 
-    for (auto i : indices) {
+    for (auto i : indices)
+    {
         // Guard against partial landmark sets (e.g. a detector that returned
         // fewer points than the fixed index list expects).
-        if (i >= 0 && i < static_cast<int>(pts_mask.size())) {
+        if (i >= 0 && i < static_cast<int>(pts_mask.size()))
+        {
             pts_mask[i] = 1;
         }
     }
@@ -665,11 +772,13 @@ std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::ve
     // Confidence values accompany the 2D/3D landmark lists, so keep only the
     // ones belonging to the surviving landmarks; otherwise the BA weights
     // would be misassigned to different points.
-    if (confs.size() == pts_mask.size()) {
+    if (confs.size() == pts_mask.size())
+    {
         reduceVector(confs, pts_mask);
     }
 
-    if (landmarks.size() == 0) {
+    if (landmarks.size() == 0)
+    {
         return make_pair(false, Pose(T, R));
     }
 
@@ -684,26 +793,32 @@ std::pair<bool, Pose> HeadPoseDetector::solve_face_pose(CvPts landmarks, std::ve
     T = pose_ba.pos();
     R = pose_ba.R();
     bool success = true;
-    //cv::drawFrameAxes(frame, settings->K, cv::Mat(), rvec, tvec, 0.1, 1);
+    // cv::drawFrameAxes(frame, settings->K, cv::Mat(), rvec, tvec, 0.1, 1);
 
-    for (unsigned int i = 0; i < landmarks.size(); i++) {
+    for (unsigned int i = 0; i < landmarks.size(); i++)
+    {
         auto pt = landmarks[i];
-//        char info[100] = {0};
-//        sprintf(info, "%d", indices[i]);
-//        cv::putText(frame, info, pt - cv::Point2f(0, 5), cv::FONT_HERSHEY_COMPLEX, 0.3, cv::Scalar(255, 0, 0), 1);
+        //        char info[100] = {0};
+        //        sprintf(info, "%d", indices[i]);
+        //        cv::putText(frame, info, pt - cv::Point2f(0, 5), cv::FONT_HERSHEY_COMPLEX, 0.3, cv::Scalar(255, 0, 0), 1);
         cv::circle(frame, pt, 3, cv::Scalar(0, 0, 255), 1);
     }
 
-    if (success) {
-        if (first_solve_pose) {
+    if (success)
+    {
+        if (first_solve_pose)
+        {
             first_solve_pose = false;
         }
 
-        //char info[100] = {0};
-        //sprintf(info, "Tpnp [%3.1f,%3.1f,%3.1f] cm", T.x()*100, T.y()*100, T.z()*100);
-        //cv::putText(frame, info, cv::Point2f(20, 100), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 0, 0), 1);
-    } else {
-        if (throttledLog("pnp_failed", 2000)) qDebug() << "pnp Solve failed";
+        // char info[100] = {0};
+        // sprintf(info, "Tpnp [%3.1f,%3.1f,%3.1f] cm", T.x()*100, T.y()*100, T.z()*100);
+        // cv::putText(frame, info, cv::Point2f(20, 100), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 0, 0), 1);
+    }
+    else
+    {
+        if (throttledLog("pnp_failed", 2000))
+            qDebug() << "pnp Solve failed";
     }
 
     return make_pair(success, Pose(T, R));

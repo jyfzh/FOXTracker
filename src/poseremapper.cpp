@@ -1,56 +1,62 @@
 #include "poseremapper.h"
+
 #include <utility>
 #include <QDebug>
-#include <FlightAgxSettings.h>
 
-namespace {
+#include "FlightAgxSettings.h"
 
-void apply_accela(accela &filter_instance,
-                  const Eigen::Vector3d &eul,
-                  const Eigen::Vector3d &translation,
-                  double dt,
-                  Eigen::Vector3d &filtered_eul,
-                  Eigen::Vector3d &filtered_translation)
+namespace
 {
-    accela_state input{};
-    input.eul[0] = eul[0];
-    input.eul[1] = eul[1];
-    input.eul[2] = eul[2];
-    input.translation[0] = translation[0];
-    input.translation[1] = translation[1];
-    input.translation[2] = translation[2];
 
-    accela_state output{};
-    filter_instance.filter(input, dt, output);
-    filtered_eul = Eigen::Vector3d(output.eul[0], output.eul[1], output.eul[2]);
-    filtered_translation = Eigen::Vector3d(output.translation[0], output.translation[1], output.translation[2]);
-}
+    void apply_accela(accela &filter_instance,
+                      const Eigen::Vector3d &eul,
+                      const Eigen::Vector3d &translation,
+                      double dt,
+                      Eigen::Vector3d &filtered_eul,
+                      Eigen::Vector3d &filtered_translation)
+    {
+        accela_state input{};
+        input.eul[0] = eul[0];
+        input.eul[1] = eul[1];
+        input.eul[2] = eul[2];
+        input.translation[0] = translation[0];
+        input.translation[1] = translation[1];
+        input.translation[2] = translation[2];
+
+        accela_state output{};
+        filter_instance.filter(input, dt, output);
+        filtered_eul = Eigen::Vector3d(output.eul[0], output.eul[1], output.eul[2]);
+        filtered_translation = Eigen::Vector3d(output.translation[0], output.translation[1], output.translation[2]);
+    }
 
 } // namespace
 
-PoseRemapper::PoseRemapper(QObject *parent) : QObject(parent), _accela(&(settings->accela_s)), 
-        _accela2(&(settings->accela_s))
+PoseRemapper::PoseRemapper(QObject *parent) : QObject(parent), _accela(&(settings->accela_s)),
+                                              _accela2(&(settings->accela_s))
 {
     Rcam << 0, 0, -1,
-           -1, 0, 0,
-            0, 1, 0;
+        -1, 0, 0,
+        0, 1, 0;
 
     pose_callback_timer = new QTimer;
     connect(pose_callback_timer, SIGNAL(timeout()), this, SLOT(pose_callback_loop()));
-    pose_callback_timer->start(1000/POSE_OUTPUT_FREQ);
+    pose_callback_timer->start(1000 / POSE_OUTPUT_FREQ);
 
     eul_last = Eigen::Vector3d::Zero();
     T_last = Eigen::Vector3d::Zero();
     t_last = 0;
 
-    t0 = QDateTime::currentMSecsSinceEpoch()/1000.0;
+    t0 = QDateTime::currentMSecsSinceEpoch() / 1000.0;
 }
 
-double double_constrain(double v, double vmin, double vmax) {
-    if (v > vmax) {
+double double_constrain(double v, double vmin, double vmax)
+{
+    if (v > vmax)
+    {
         return vmax;
     }
-    if (v < vmin) {
+    if (v < vmin)
+    {
         return vmin;
     }
 
@@ -59,33 +65,38 @@ double double_constrain(double v, double vmin, double vmax) {
 
 double expo(const double &value, const double &e)
 {
-    double x = double_constrain(value, - 1, 1);
+    double x = double_constrain(value, -1, 1);
     double ec = double_constrain(e, 0, 1);
     return (1 - ec) * x + ec * x * x * x;
 }
 
 const double superexpo(const double &value, double e = 0.5, double g = 0.5)
 {
-    double x = double_constrain(value, - 1, 1);
+    double x = double_constrain(value, -1, 1);
     double gc = double_constrain(g, 0, 0.99);
     return expo(x, e) * (1 - gc) / (1 - std::abs(x) * gc);
 }
 
-double remap(double v, double input_bound, double output_bound, double _expo) {
-    return expo(v / input_bound, _expo)*output_bound;
-    //return v/input_bound*output_bound;
+double remap(double v, double input_bound, double output_bound, double _expo)
+{
+    return expo(v / input_bound, _expo) * output_bound;
+    // return v/input_bound*output_bound;
 }
 
-void PoseRemapper::pose_callback_loop() {
-    if (settings->use_ft || settings->use_npclient) {
-        double t = QDateTime::currentMSecsSinceEpoch()/1000.0 - t0;
+void PoseRemapper::pose_callback_loop()
+{
+    if (settings->use_ft || settings->use_npclient)
+    {
+        double t = QDateTime::currentMSecsSinceEpoch() / 1000.0 - t0;
         double dt = t - t_last;
         t_last = t;
         Eigen::Vector3d eul = eul_last, T = T_last;
-        if (!has_pose_data) {
+        if (!has_pose_data)
+        {
             return;
         }
-        if (settings->use_accela) {
+        if (settings->use_accela)
+        {
             apply_accela(_accela, eul_last, T_last, dt, eul, T);
 
             if (settings->double_accela)
@@ -96,9 +107,11 @@ void PoseRemapper::pose_callback_loop() {
     }
 }
 
-void PoseRemapper::on_pose_data(double t, Pose_ pose_) {
+void PoseRemapper::on_pose_data(double t, Pose_ pose_)
+{
     Pose pose(pose_.second, pose_.first);
-    if(!is_inited) {
+    if (!is_inited)
+    {
         qDebug() << "Reset initial pose";
         std::cout << initial_pose.att().toRotationMatrix() << std::endl;
         initial_pose = pose;
@@ -111,7 +124,8 @@ void PoseRemapper::on_pose_data(double t, Pose_ pose_) {
     auto eul = quat2eulers(Q);
     has_pose_data = true;
 
-    if (settings->use_ft || settings->use_npclient) {
+    if (settings->use_ft || settings->use_npclient)
+    {
         T.x() = remap(T.x(), settings->inp_bound_trans.x(), settings->out_bound_trans.x(), settings->expo_trans.x());
         T.y() = remap(T.y(), settings->inp_bound_trans.y(), settings->out_bound_trans.y(), settings->expo_trans.y());
         T.z() = remap(T.z(), settings->inp_bound_trans.z(), settings->out_bound_trans.z(), settings->expo_trans.z());
@@ -124,14 +138,15 @@ void PoseRemapper::on_pose_data(double t, Pose_ pose_) {
         eul.z() = remap(eul.z(), settings->inp_bound_eul.z(), settings->out_bound_eul.z(), settings->expo_eul.z());
         eul_last = eul;
         T_last = T;
-
-    } else {
+    }
+    else
+    {
         this->send_mapped_posedata(t, std::make_pair(eul, T));
     }
-
 }
 
-void PoseRemapper::reset_center() {
+void PoseRemapper::reset_center()
+{
     is_inited = false;
     _accela.center();
     _accela2.center();

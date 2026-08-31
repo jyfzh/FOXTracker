@@ -8,17 +8,17 @@
 #include <QDir>
 #include <QDebug>
 #include <yaml-cpp/yaml.h>
-#include <accela-settings.hpp>
+#include "accela_filter/accela-settings.hpp"
 
 #define MIN_ROI_AREA 10
 
-#define DEG2RAD 3.1415926535/180
-#define RAD2DEG 180/3.1415926535
+#define DEG2RAD 3.1415926535 / 180
+#define RAD2DEG 180 / 3.1415926535
 
-//#define EMI_NN_SIZE (56)
-//#define EMI_NN_OUTPUT_SIZE (7)
-//#define EMI_FEATURE_NUM 30
-//#define EMI_OUTPUT_CHANNELS (90)
+// #define EMI_NN_SIZE (56)
+// #define EMI_NN_OUTPUT_SIZE (7)
+// #define EMI_FEATURE_NUM 30
+// #define EMI_OUTPUT_CHANNELS (90)
 
 #define EMI_NN_MAX_INPUT (224)
 #define EMI_NN_MAX_OUTPUT (28)
@@ -29,14 +29,15 @@
 #define EMI_FEATURE_NUM 66
 #define EMI_OUTPUT_CHANNELS (198)
 
-//#define EMI_NN_SIZE (224)
-//#define EMI_NN_OUTPUT_SIZE (28)
-//#define EMI_FEATURE_NUM 66
-//#define EMI_OUTPUT_CHANNELS (198)
+// #define EMI_NN_SIZE (224)
+// #define EMI_NN_OUTPUT_SIZE (28)
+// #define EMI_FEATURE_NUM 66
+// #define EMI_OUTPUT_CHANNELS (198)
 
 #define POSE_OUTPUT_FREQ 250.0
 
-class FlightAgxSettings {
+class FlightAgxSettings
+{
 public:
     cv::Mat K;
     cv::Mat D;
@@ -51,11 +52,8 @@ public:
     int port = 4242;
     std::string udp_host = "127.0.0.1";
 
-
-
     int emi_nn_size = 224;
     int emi_nn_output_size = 28;
-
 
     std::string app_path;
     // UI color theme: "system" | "light" | "dark" (see ThemeManager)
@@ -101,13 +99,13 @@ public:
     Eigen::Vector3d inp_bound_trans, inp_bound_eul;
     Eigen::Vector3d out_bound_trans, out_bound_eul, expo_trans, expo_eul;
 
-    double pitch_offset_fsa_pnp = 11/180*3.1415926;
+    double pitch_offset_fsa_pnp = 11 / 180 * 3.1415926;
 
     //-1 dlib
-    //0 network 0
-    //network 1
-    //2
-    //3
+    // 0 network 0
+    // network 1
+    // 2
+    // 3
     int landmark_detect_method = -1;
 
     int landmark_net_width = 224;
@@ -122,13 +120,17 @@ public:
 
     settings_accela accela_s;
 
-    void set_landmark_level(int landmark_level) {
+    void set_landmark_level(int landmark_level)
+    {
         qDebug() << "Use landmark mode" << landmark_level;
         landmark_detect_method = landmark_level;
-        if(landmark_level <= 1) {
+        if (landmark_level <= 1)
+        {
             emi_nn_size = 112;
             emi_nn_output_size = 14;
-        } else {
+        }
+        else
+        {
             emi_nn_size = 224;
             emi_nn_output_size = 28;
         }
@@ -151,40 +153,40 @@ public:
         "landmark_models/lm_modelV_opt.onnx",
         "landmark_models/lm_model1_opt.onnx",
         "landmark_models/lm_model2_opt.onnx",
-        "landmark_models/lm_model3_opt.onnx"
-    };
+        "landmark_models/lm_model3_opt.onnx"};
 
-
-    FlightAgxSettings(): hotkey_joystick_names(2),hotkey_joystick_buttons(2) {
+    FlightAgxSettings() : hotkey_joystick_names(2), hotkey_joystick_buttons(2)
+    {
         Eigen::Matrix3d K_eigen;
         Eigen::VectorXd D_eigen(5);
 
-        //Surface camera
-        // K_eigen << 520.70925933,   0.,         319.58341522,
-        //           0.,         520.3492704,  231.99546224,
-        //           0.,           0.,           1.   ;
-        // D_eigen << 0.19808774, -0.68766424, -0.00180889,  0.0008008 ,  0.7539345;
-        // D_eigen = D_eigen.transpose();
+        // Surface camera
+        //  K_eigen << 520.70925933,   0.,         319.58341522,
+        //            0.,         520.3492704,  231.99546224,
+        //            0.,           0.,           1.   ;
+        //  D_eigen << 0.19808774, -0.68766424, -0.00180889,  0.0008008 ,  0.7539345;
+        //  D_eigen = D_eigen.transpose();
 
         // CL Eye
-        //  K 
+        //  K
         // [[553.61456617   0.         308.32781287]
         // [  0.         556.75788726 252.73270154]
-        // [  0.           0.           1.        ]] 
-        // D 
+        // [  0.           0.           1.        ]]
+        // D
         // [[-0.10055392  0.19422527  0.00414563 -0.00049292 -0.02306945]]
-        K_eigen << 553.61456617,   0.,         308.32781287,
-            0,         556.75788726, 252.73270154,
-            0.,           0.,           1.;
+        K_eigen << 553.61456617, 0., 308.32781287,
+            0, 556.75788726, 252.73270154,
+            0., 0., 1.;
 
-        D_eigen <<  -0.10055392,  0.19422527,  0.00414563, -0.00049292, -0.02306945;
+        D_eigen << -0.10055392, 0.19422527, 0.00414563, -0.00049292, -0.02306945;
 
         cv::eigen2cv(K_eigen, K);
         cv::eigen2cv(D_eigen, D);
 
         const QDir app_dir(QCoreApplication::applicationDirPath());
         app_path = QDir::cleanPath(app_dir.absolutePath()).toStdString();
-        const auto asset_path = [&app_dir](const QString &relative_path) {
+        const auto asset_path = [&app_dir](const QString &relative_path)
+        {
             return app_dir.filePath(QStringLiteral("assets/") + relative_path).toStdString();
         };
 
@@ -199,15 +201,16 @@ public:
         protoPath = asset_path(QStringLiteral("face_detector/deploy.prototxt"));
         modelPath = asset_path(QStringLiteral("face_detector/res10_300x300_ssd_iter_140000.caffemodel"));
 
-        for (auto &st : emilianavt_models) {
+        for (auto &st : emilianavt_models)
+        {
             st = asset_path(QString::fromStdString(st));
         }
 
         qDebug() << "App run at" << app_path.c_str();
 
         Rcam << 0, 0, -1,
-                -1, 0, 0,
-                 0, 1, 0;
+            -1, 0, 0,
+            0, 1, 0;
 
         load_from_config_yaml();
     }
@@ -216,17 +219,16 @@ public:
     void load_from_config_yaml();
     void write_to_file();
 
-    template<class T>
-    void set_value(std::string k, T v, bool is_write_to_file=false) {
+    template <class T>
+    void set_value(std::string k, T v, bool is_write_to_file = false)
+    {
         config[k] = v;
-        if(is_write_to_file) {
+        if (is_write_to_file)
+        {
             write_to_file();
         }
     }
 };
 
-
-
-
-extern FlightAgxSettings * settings;
+extern FlightAgxSettings *settings;
 #endif // FLIGHTAGXSETTINGS_H

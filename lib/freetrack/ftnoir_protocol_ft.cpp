@@ -6,8 +6,7 @@
  * copyright notice and this permission notice appear in all copies.
  */
 
-
-#include "ftnoir_protocol_ft.h"
+#include "freetrack/ftnoir_protocol_ft.h"
 #include "freetrack/csv/csv.h"
 #include "FlightAgxSettings.h"
 
@@ -26,8 +25,8 @@ freetrack::~freetrack()
     dummyTrackIR.close();
 }
 
-//static_assert(sizeof(LONG) == sizeof(std::int32_t));
-//static_assert(sizeof(LONG) == 4u);
+// static_assert(sizeof(LONG) == sizeof(std::int32_t));
+// static_assert(sizeof(LONG) == 4u);
 
 #define TX 0
 #define TY 1
@@ -36,55 +35,54 @@ freetrack::~freetrack()
 #define PITCH 4
 #define ROLL 5
 
-
-never_inline void store(float volatile& place, const float value)
+never_inline void store(float volatile &place, const float value)
 {
 #if defined(_WIN32)
     union
     {
         float f32;
         LONG i32;
-    } value_ {};
+    } value_{};
 
     value_.f32 = value;
-    (void)InterlockedExchange((LONG volatile*)&place, value_.i32);
+    (void)InterlockedExchange((LONG volatile *)&place, value_.i32);
 #else
     std::uint32_t bits;
     static_assert(sizeof(bits) == sizeof(value), "FreeTrack fields must be 32-bit");
     std::memcpy(&bits, &value, sizeof(bits));
-    __atomic_store_n(reinterpret_cast<volatile std::uint32_t*>(&place),
+    __atomic_store_n(reinterpret_cast<volatile std::uint32_t *>(&place),
                      bits, __ATOMIC_SEQ_CST);
 #endif
 }
 
-template<typename t, typename u>
-static void store(t volatile& place, u value)
+template <typename t, typename u>
+static void store(t volatile &place, u value)
 {
     const t converted = static_cast<t>(value);
 #if defined(_WIN32)
     static_assert(sizeof(t) == sizeof(LONG), "FreeTrack fields must be 32-bit");
-    (void)InterlockedExchange(reinterpret_cast<LONG volatile*>(&place),
+    (void)InterlockedExchange(reinterpret_cast<LONG volatile *>(&place),
                               static_cast<LONG>(converted));
 #else
     __atomic_store_n(&place, converted, __ATOMIC_SEQ_CST);
 #endif
 }
 
-static std::int32_t load(std::int32_t volatile& place)
+static std::int32_t load(std::int32_t volatile &place)
 {
 #if defined(_WIN32)
-    return InterlockedCompareExchange((volatile LONG*) &place, 0, 0);
+    return InterlockedCompareExchange((volatile LONG *)&place, 0, 0);
 #else
     return __atomic_load_n(&place, __ATOMIC_SEQ_CST);
 #endif
 }
 
-
-void freetrack::on_pose6d_data(double t, Pose6DoF pose) {
+void freetrack::on_pose6d_data(double t, Pose6DoF pose)
+{
     double data[6] = {0};
-    data[0] = - pose.second.x()*100;
-    data[1] = pose.second.y()*100;
-    data[2] = - pose.second.z()*100;
+    data[0] = -pose.second.x() * 100;
+    data[1] = pose.second.y() * 100;
+    data[2] = -pose.second.z() * 100;
     auto eul = pose.first;
     data[3] = eul.x();
     data[4] = eul.y();
@@ -93,9 +91,9 @@ void freetrack::on_pose6d_data(double t, Pose6DoF pose) {
     this->pose(data, data);
 }
 
-void freetrack::pose(const double* headpose, const double* raw)
+void freetrack::pose(const double *headpose, const double *raw)
 {
-    constexpr double d2r = M_PI/180.0;
+    constexpr double d2r = M_PI / 180.0;
 
     const float yaw = float(-headpose[YAW] * d2r);
     const float roll = float(headpose[ROLL] * d2r);
@@ -107,8 +105,8 @@ void freetrack::pose(const double* headpose, const double* raw)
     const bool is_crossing_90 = std::fabs(headpose[PITCH] - 90) < .15;
     const float pitch = float(-d2r * (is_crossing_90 ? 89.86 : headpose[PITCH]));
 
-    FTHeap* const ft = pMemData;
-    FTData* const data = &ft->data;
+    FTHeap *const ft = pMemData;
+    FTData *const data = &ft->data;
 
     store(data->X, tx);
     store(data->Y, ty);
@@ -130,19 +128,21 @@ void freetrack::pose(const double* headpose, const double* raw)
     if (intGameID != id)
     {
         QString gamename;
-        union  {
+        union
+        {
             unsigned char table[8];
             std::int32_t ints[2];
-        } t {};
+        } t{};
 
-        t.ints[0] = 0; t.ints[1] = 0;
+        t.ints[0] = 0;
+        t.ints[1] = 0;
 
         (void)CSV::getGameData(id, t.table, settings->support_games_csv.c_str(), gamename);
 
         {
             // FTHeap pMemData happens to be aligned on a page boundary by virtue of
             // memory mapping usage (MS Windows equivalent of mmap(2)).
-//            static_assert((offsetof(FTHeap, table) & (sizeof(LONG)-1)) == 0);
+            //            static_assert((offsetof(FTHeap, table) & (sizeof(LONG)-1)) == 0);
 
             for (unsigned k = 0; k < 2; k++)
                 store(pMemData->table_ints[k], t.ints[k]);
@@ -161,7 +161,7 @@ void freetrack::pose(const double* headpose, const double* raw)
     }
     else
 #if defined(_WIN32)
-        (void)InterlockedAdd((LONG volatile*)&data->DataID, 1);
+        (void)InterlockedAdd((LONG volatile *)&data->DataID, 1);
 #else
         (void)__atomic_add_fetch(&data->DataID, 1u, __ATOMIC_SEQ_CST);
 #endif
@@ -173,7 +173,8 @@ QString freetrack::game_name()
     return connected_game;
 }
 
-void freetrack::start_dummy() {
+void freetrack::start_dummy()
+{
 #if defined(_WIN32)
     static const QString program(settings->trackir_path.c_str());
     dummyTrackIR.setProgram("\"" + program + "\"");

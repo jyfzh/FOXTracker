@@ -1,18 +1,3 @@
--- In-tree vendored libraries (NOT git submodules). They are built as normal
--- xmake targets and consumed by the FOXTracker target via add_deps().
---
--- `accela_filter` deliberately has a plain-data API. It must not expose
--- header-only Eigen types across this target boundary; the application and
--- the filter can otherwise be compiled against different Eigen versions.
-
-target("accela_filter")
-    set_kind("static")
-    add_files("accela_filter/*.cpp")
-    -- `accela_filter` is public so dependents (FOXTracker directly includes
-    -- <filter_accela.h> / <accela-settings.hpp>) inherit the include path.
-    add_includedirs("accela_filter", {public = true})
-    set_languages("c++17")
-
 -- freetrack uses Qt6, so it uses the `qt.static` rule. On MSVC that rule
 -- injects the Qt6-required conformance flags (/Zc:__cplusplus, /permissive-),
 -- the QT_*_LIB defines and the QtCore link, and it runs moc on any Q_OBJECT
@@ -33,18 +18,18 @@ target("freetrack")
     if is_plat("windows") then
         add_files("freetrack/freetrackclient/*.c")
     end
-    -- `lib/` is on the include path so `<freetrack/ftnoir_protocol_ft.h>` and
-    -- `<accela-settings.hpp>` / `<filter_accela.h>` resolve, matching CMake.
+    -- Expose the lib root so consumers can include freetrack headers as
+    -- <freetrack/ftnoir_protocol_ft.h>. The implementation also depends on
+    -- project headers that now live under src/.
     add_includedirs(
         ".",
         "freetrack",
         "freetrack/csv",
         "freetrack/freetrackclient",
-        "accela_filter",
-        path.join(os.projectdir(), "inc")
+        path.join(os.projectdir(), "src"),
+        {public = true}
     )
     add_packages("qtbase", "qt6widgets", "qt6network", "yaml-cpp", "eigen", "opencv")
-    add_deps("accela_filter")
     set_languages("c++17")
 
 -- ---------------------------------------------------------------------------

@@ -8,21 +8,18 @@
 
 #pragma once
 
+#include <memory>
+#include <cinttypes>
 
 #include <QProcess>
 #include <QString>
 #include <QMutex>
-
 #include <QDebug>
 
-#include <cinttypes>
 #include "freetrackclient/fttypes.h"
 
 #include "shm.h"
-
-#include <memory>
-#include <fagx_datatype.h>
-
+#include "fagx_datatype.h"
 
 class freetrack : QObject
 {
@@ -32,13 +29,14 @@ public:
     freetrack() = default;
     ~freetrack();
     bool initialize();
-    void pose(const double* pose, const double*);
+    void pose(const double *pose, const double *);
     QString game_name();
 public slots:
     void on_pose6d_data(double t, Pose6DoF pose);
+
 private:
-    shm_wrapper shm { FREETRACK_HEAP, FREETRACK_MUTEX, sizeof(FTHeap) };
-    FTHeap* pMemData { (FTHeap*) shm.ptr() };
+    shm_wrapper shm{FREETRACK_HEAP, FREETRACK_MUTEX, sizeof(FTHeap)};
+    FTHeap *pMemData{(FTHeap *)shm.ptr()};
 
     QProcess dummyTrackIR;
 

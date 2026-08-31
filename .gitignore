@@ -34,6 +34,7 @@ Thumbs.db
 
 # Qt and IDE generated files
 .qtcreator
+.vscode
 
 # xemacs temporary files
 *.flc

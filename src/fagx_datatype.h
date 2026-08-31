@@ -5,10 +5,11 @@
 #include <opencv2/opencv.hpp>
 #include <QMetaType>
 #include <QVariant>
-#include <utils.h>
+
+#include "utils.h"
 #include "Pose.h"
 
-//Yaw Pitch Roll X Y Z
+// Yaw Pitch Roll X Y Z
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Pose6DoF;
 
 typedef std::pair<Eigen::Matrix3d, Eigen::Vector3d> Pose_;
@@ -26,7 +27,7 @@ Q_DECLARE_METATYPE(Pose);
 
 class TicToc
 {
-  public:
+public:
     TicToc()
     {
         tic();
@@ -44,7 +45,7 @@ class TicToc
         return elapsed_seconds.count() * 1000;
     }
 
-  private:
+private:
     std::chrono::time_point<std::chrono::system_clock> start, end;
 };
 
